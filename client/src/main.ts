@@ -1,4 +1,3 @@
-import "./style.css";
 import Stats from "three/addons/libs/stats.module.js";
 import { LocalPlayerController } from "./Controllers/LocalPlayerController";
 import { RunService } from "./Controllers/RunService";
@@ -14,13 +13,12 @@ RunService.RenderStepped.Connect(() => {
 LocalPlayerController.Fly = true;
 LocalPlayerController.Load();
 
-import loadFlyingBoxes from "./Worlds/FlyingBoxes";
-import loadValley from "./Worlds/Valley";
+// import loadFlyingBoxes from "./Worlds/FlyingBoxes";
+// import loadValley from "./Worlds/Valley";
 import load3dNoise from "./Worlds/3dNoise";
-import loadMinecraft from "./Worlds/Minecraft";
-import loadLaggy from "./Worlds/LaggyWorld";
+// import loadMinecraft from "./Worlds/Minecraft";
 
 load3dNoise();
-// loadValley();
+// loadValley()
 
 //start 287

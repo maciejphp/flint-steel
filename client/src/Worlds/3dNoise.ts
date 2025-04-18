@@ -1,23 +1,16 @@
-import * as THREE from "three";
+import { AmbientLight, DirectionalLight } from "three";
 import { Workspace } from "../Controllers/Workspace";
-import { World } from "../Modules/Terrain/World";
+import { WorldController } from "../Controllers/WorldController";
 
 export default (): void => {
-  //   chunk.generateBlocks();
-  const world = new World();
-  const scene = Workspace.Scene;
+	const scene = Workspace.Scene;
 
-  const worldSize = 6;
-  for (let x = 0; x < worldSize; x++) {
-    for (let z = 0; z < worldSize; z++) {
-      world.generateChunk(new THREE.Vector3(x, 0, z));
-    }
-  }
+	WorldController.Start();
 
-  const ambientLight = new THREE.AmbientLight(0xeeeeee, 3);
-  scene.add(ambientLight);
+	const ambientLight = new AmbientLight(0xeeeeee, 3);
+	scene.add(ambientLight);
 
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 12);
-  directionalLight.position.set(1, 1, 0.5).normalize();
-  scene.add(directionalLight);
+	const directionalLight = new DirectionalLight(0xffffff, 12);
+	directionalLight.position.set(1, 1, 0.5).normalize();
+	scene.add(directionalLight);
 };

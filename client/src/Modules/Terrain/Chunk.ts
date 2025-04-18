@@ -1,24 +1,18 @@
-import {
-  getWorldBlockPosition,
-  positionToId,
-  setBoxUv,
-  setPlaneUv,
-  xyzToId,
-} from "../Functions";
+import { getChunkBlockPosition, getWorldBlockPosition, positionToId, setPlaneUv, xyzToId } from "../Functions";
 import { settings } from "../Settings";
 import {
-  Vector3,
-  BoxGeometry,
-  TextureLoader,
-  SRGBColorSpace,
-  NearestFilter,
-  Mesh,
-  MeshBasicMaterial,
-  Matrix4,
-  PlaneGeometry,
+	Vector3,
+	TextureLoader,
+	SRGBColorSpace,
+	NearestFilter,
+	Mesh,
+	MeshBasicMaterial,
+	Matrix4,
+	PlaneGeometry,
+	BufferGeometry,
 } from "three";
 import { generateBlock } from "./WorldGeneration";
-import * as BufferGeometryUtils from "three/addons/utils/BufferGeometryUtils.js";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { Workspace } from "../../Controllers/Workspace";
 
 const { chunkBlockWidth, chunkBlockHeight, blockSize } = settings;
@@ -26,242 +20,225 @@ const halfBlockSize = blockSize / 2;
 const halfPi = Math.PI / 2;
 
 const planePrehabs = {
-  px: new PlaneGeometry(blockSize, blockSize)
-    .rotateY(halfPi)
-    .translate(halfBlockSize, 0, 0),
+	px: new PlaneGeometry(blockSize, blockSize).rotateY(halfPi).translate(halfBlockSize, 0, 0),
 
-  nx: new PlaneGeometry(blockSize, blockSize)
-    .rotateY(-halfPi)
-    .translate(-halfBlockSize, 0, 0),
+	nx: new PlaneGeometry(blockSize, blockSize).rotateY(-halfPi).translate(-halfBlockSize, 0, 0),
 
-  py: new PlaneGeometry(blockSize, blockSize)
-    .rotateX(-halfPi)
-    .translate(0, halfBlockSize, 0),
+	py: new PlaneGeometry(blockSize, blockSize).rotateX(-halfPi).translate(0, halfBlockSize, 0),
 
-  ny: new PlaneGeometry(blockSize, blockSize)
-    .rotateX(halfPi)
-    .translate(0, -halfBlockSize, 0),
+	ny: new PlaneGeometry(blockSize, blockSize).rotateX(halfPi).translate(0, -halfBlockSize, 0),
 
-  pz: new PlaneGeometry(blockSize, blockSize).translate(0, 0, halfBlockSize),
+	pz: new PlaneGeometry(blockSize, blockSize).translate(0, 0, halfBlockSize),
 
-  nz: new PlaneGeometry(blockSize, blockSize)
-    .rotateY(Math.PI)
-    .translate(0, 0, -halfBlockSize),
+	nz: new PlaneGeometry(blockSize, blockSize).rotateY(Math.PI).translate(0, 0, -halfBlockSize),
 };
 
 export class Chunk {
-  chunkPosition: Vector3;
-  blocks: number[] = [];
-  chunkFront?: Chunk;
-  chunkBack?: Chunk;
-  chunkRight?: Chunk;
-  chunkLeft?: Chunk;
-  //   blockFolder: Folder;
-  generated = false;
-  loadedIn = false;
+	chunkPosition: Vector3;
+	blocks: number[] = [];
+	chunkFront?: Chunk;
+	chunkBack?: Chunk;
+	chunkRight?: Chunk;
+	chunkLeft?: Chunk;
+	generated = false;
+	loadedIn = false;
+	mesh?: Mesh;
 
-  constructor(chunkPosition: Vector3) {
-    this.chunkPosition = chunkPosition;
-    // this.blockFolder = Make("Folder", { Name: "Chunk" });
-    // let chunkData = BlockService.GetChunkData(chunkPosition);
-    // chunkData = chunkData?.sort();
+	constructor(chunkPosition: Vector3) {
+		this.chunkPosition = chunkPosition;
 
-    // let blocksBroken = 0;
-    // let nextBlock = chunkData ? chunkData[blocksBroken] : undefined;
+		//Create new "Ghost" blocks
+		for (let x = 0; x < chunkBlockWidth; x++) {
+			for (let y = 0; y < chunkBlockHeight; y++) {
+				for (let z = 0; z < chunkBlockWidth; z++) {
+					const chunkBlockPosition = new Vector3(x, y, z);
+					const worldBlockPosition = getWorldBlockPosition(chunkBlockPosition.clone(), chunkPosition.clone());
+					this.blocks.push(generateBlock(worldBlockPosition));
+				}
+			}
+		}
+		this.loadedIn = true;
+	}
 
-    //Create new "Ghost" blocks
-    for (let x = 0; x < chunkBlockWidth; x++) {
-      for (let y = 0; y < chunkBlockHeight; y++) {
-        for (let z = 0; z < chunkBlockWidth; z++) {
-          const chunkBlockPosition = new Vector3(x, y, z);
-          const worldBlockPosition = getWorldBlockPosition(
-            chunkBlockPosition.clone(),
-            chunkPosition.clone()
-          );
-          //   const blockId = positionToId(chunkBlockPosition);
+	//
 
-          // If block broken make it air else generate
-          //   if (chunkData && nextBlock === blockId) {
-          //     blocksBroken++;
-          //     nextBlock = chunkData[blocksBroken];
-          //     this.blocks.push(new Air(worldBlockPosition));
-          //   } else {
-          //     const block = generateBlock(worldBlockPosition);
-          //     block.blockFolder = this.blockFolder;
+	DestroyBlock(blockPosition: Vector3): void {
+		if (!this.mesh) return;
 
-          //     this.blocks.push(block);
-          //   }
-          this.blocks.push(generateBlock(worldBlockPosition));
-        }
-      }
-    }
-    this.loadedIn = true;
-  }
+		const chunkBlockPosition = getChunkBlockPosition(blockPosition.clone(), this.chunkPosition.clone());
+		this.blocks[positionToId(chunkBlockPosition)] = 0;
 
-  //   destroyBlock(blockPosition: Vector3) {
-  //     const chunkBlockPosition = getChunkBlockPosition(
-  //       blockPosition,
-  //       this.chunkPosition
-  //     );
-  //     const air = this.blocks[positionToId(chunkBlockPosition)];
-  //     const block = getBlock(air);
-  //     if (!block || block.blockSettings.unbreakable) return;
+		this.Generate();
 
-  //     // Fire server
-  //     BlockService.BreakBlock.Fire(blockPosition);
-  //     block.destroy();
+		if (chunkBlockPosition.x === 0 && this.chunkLeft?.generated) this.chunkLeft.Generate();
+		else if (chunkBlockPosition.x === chunkBlockWidth - 1 && this.chunkRight?.generated) this.chunkRight.Generate();
+		if (chunkBlockPosition.z === 0 && this.chunkBack?.generated) this.chunkBack.Generate();
+		else if (chunkBlockPosition.z === chunkBlockWidth - 1 && this.chunkFront?.generated) this.chunkFront.Generate();
 
-  //     getNeightborBlocks(this, chunkBlockPosition).forEach((air) => {
-  //       const block = getBlock(air);
-  //       if (block && !block.generated) {
-  //         // Dont generate the block is the chunk its at hasn't generated
-  //         const chunkBlockPosition = getChunkBlockPosition(
-  //           block.position,
-  //           this.chunkPosition
-  //         );
-  //         if (
-  //           (chunkBlockPosition.x > chunkBlockWidth &&
-  //             !this.chunkRight?.generated) ||
-  //           (chunkBlockPosition.x < 0 && !this.chunkLeft?.generated) ||
-  //           (chunkBlockPosition.z > chunkBlockWidth &&
-  //             !this.chunkFront?.generated) ||
-  //           (chunkBlockPosition.z < 0 && !this.chunkBack?.generated)
-  //         )
-  //           return;
+		// Update chunk
 
-  //         block.generate();
-  //       }
-  //     });
-  //   }
+		// const box = new Mesh(
+		//   new BoxGeometry(),
+		//   new MeshBasicMaterial({ color: "red" })
+		// );
+		// box.position.set(blockPosition.x, blockPosition.y, blockPosition.z);
+		// Workspace.Scene.add(box);
+	}
 
-  generateBlocks(): void {
-    // this.blockFolder.Parent = Workspace;
+	//
+	PlaceBlock(blockPosition: Vector3): void {
+		if (!this.generated) return;
 
-    const geometries: PlaneGeometry[] = [];
+		const chunkBlockPosition = getChunkBlockPosition(blockPosition.clone(), this.chunkPosition.clone());
 
-    //Do a check to see if the block visible. Don't render otherwise
-    for (let x = 0; x < chunkBlockWidth; x++) {
-      //   if (x % 2 === 0 && x !== chunkBlockWidth) task.wait();
-      for (let y = 0; y < chunkBlockHeight; y++) {
-        for (let z = 0; z < chunkBlockWidth; z++) {
-          // const air = this.blocks[xyzToId(x, y, z)];
+		if (chunkBlockPosition.y < 0 || chunkBlockPosition.y >= chunkBlockHeight) return;
 
-          //   console.log(this.blocks[xyzToId(x, y, z)]);
-          if (this.blocks[xyzToId(x, y, z)] === 0) continue;
+		this.blocks[xyzToId(chunkBlockPosition.x, chunkBlockPosition.y, chunkBlockPosition.z)] = 3;
 
-          const chunkBlockPosition = new Vector3(x, y, z);
-          const worldBlockPosition = getWorldBlockPosition(
-            chunkBlockPosition.clone(),
-            this.chunkPosition.clone()
-          );
+		this.Generate();
+	}
 
-          const matrix = new Matrix4();
-          matrix.makeTranslation(
-            worldBlockPosition.x,
-            worldBlockPosition.y,
-            worldBlockPosition.z
-          );
+	//
 
-          //   const cube = new BoxGeometry(blockSize, blockSize, blockSize);
-          //   cube.applyMatrix4(matrix);
-          //   setBoxUv(cube, 2);
-          //   geometries.push(cube);
+	private GenerateGeometry(): BufferGeometry | undefined {
+		const geometries: PlaneGeometry[] = [];
 
-          //   Object.entries(planePrehabs).forEach(([, prefab]) => {
-          //     const plane = prefab.clone().applyMatrix4(matrix);
-          //     setPlaneUv(plane, 2);
-          //     geometries.push(plane);
-          //   });
-          const blockFaces: PlaneGeometry[] = [];
+		//Do a check to see if the block visible. Don't render otherwise
+		for (let x = 0; x < chunkBlockWidth; x++) {
+			//   if (x % 2 === 0 && x !== chunkBlockWidth) task.wait();
+			for (let y = 0; y < chunkBlockHeight; y++) {
+				for (let z = 0; z < chunkBlockWidth; z++) {
+					// const air = this.blocks[xyzToId(x, y, z)];
 
-          // Check block right
-          if (
-            (x + 1 === chunkBlockWidth
-              ? this.chunkRight?.blocks[xyzToId(0, y, z)]
-              : this.blocks[xyzToId(x + 1, y, z)]) === 0
-          )
-            blockFaces.push(planePrehabs.px.clone().applyMatrix4(matrix));
+					//   console.log(this.blocks[xyzToId(x, y, z)]);
+					const blockId = this.blocks[xyzToId(x, y, z)];
+					if (blockId === 0) continue;
 
-          // Check block left
-          if (
-            (x === 0
-              ? this.chunkLeft?.blocks[xyzToId(chunkBlockWidth - 1, y, z)]
-              : this.blocks[xyzToId(x - 1, y, z)]) === 0
-          )
-            blockFaces.push(planePrehabs.nx.clone().applyMatrix4(matrix));
+					const chunkBlockPosition = new Vector3(x, y, z);
+					const worldBlockPosition = getWorldBlockPosition(
+						chunkBlockPosition.clone(),
+						this.chunkPosition.clone(),
+					);
 
-          // Check block front
-          if (
-            (z + 1 === chunkBlockWidth
-              ? this.chunkFront?.blocks[xyzToId(x, y, 0)]
-              : this.blocks[xyzToId(x, y, z + 1)]) === 0
-          )
-            blockFaces.push(planePrehabs.pz.clone().applyMatrix4(matrix));
+					const matrix = new Matrix4();
+					matrix.makeTranslation(worldBlockPosition.x, worldBlockPosition.y, worldBlockPosition.z);
 
-          // Check block back
-          if (
-            (z === 0
-              ? this.chunkBack?.blocks[xyzToId(x, y, chunkBlockWidth - 1)]
-              : this.blocks[xyzToId(x, y, z - 1)]) === 0
-          )
-            blockFaces.push(planePrehabs.nz.clone().applyMatrix4(matrix));
+					const blockFaces: PlaneGeometry[] = [];
 
-          // Check block up
-          if (
-            y === chunkBlockHeight - 1 ||
-            this.blocks[xyzToId(x, y + 1, z)] === 0
-          )
-            blockFaces.push(planePrehabs.py.clone().applyMatrix4(matrix));
+					// Check block right
+					if (
+						(x + 1 === chunkBlockWidth
+							? this.chunkRight?.blocks[xyzToId(0, y, z)]
+							: this.blocks[xyzToId(x + 1, y, z)]) === 0
+					)
+						blockFaces.push(planePrehabs.px.clone().applyMatrix4(matrix));
 
-          // Check block down
-          if (y === 0 || this.blocks[xyzToId(x, y - 1, z)] === 0)
-            blockFaces.push(planePrehabs.ny.clone().applyMatrix4(matrix));
+					// Check block left
+					if (
+						(x === 0
+							? this.chunkLeft?.blocks[xyzToId(chunkBlockWidth - 1, y, z)]
+							: this.blocks[xyzToId(x - 1, y, z)]) === 0
+					)
+						blockFaces.push(planePrehabs.nx.clone().applyMatrix4(matrix));
 
-          blockFaces.forEach((plane) => {
-            const textureId = Math.round(Math.random() * 2);
-            // const textureId =
-            //   (this.chunkPosition.x % 2 === 0 &&
-            //     this.chunkPosition.z % 2 !== 0) ||
-            //   (this.chunkPosition.x % 2 !== 0 && this.chunkPosition.z % 2 === 0)
-            //     ? 1
-            //     : 0;
+					// Check block front
+					if (
+						(z + 1 === chunkBlockWidth
+							? this.chunkFront?.blocks[xyzToId(x, y, 0)]
+							: this.blocks[xyzToId(x, y, z + 1)]) === 0
+					)
+						blockFaces.push(planePrehabs.pz.clone().applyMatrix4(matrix));
 
-            setPlaneUv(plane, textureId);
-            geometries.push(plane);
-          });
-        }
-      }
-    }
+					// Check block back
+					if (
+						(z === 0
+							? this.chunkBack?.blocks[xyzToId(x, y, chunkBlockWidth - 1)]
+							: this.blocks[xyzToId(x, y, z - 1)]) === 0
+					)
+						blockFaces.push(planePrehabs.nz.clone().applyMatrix4(matrix));
 
-    console.log(`${geometries.length} blocks`);
-    const geometry = BufferGeometryUtils.mergeGeometries(geometries, true);
-    geometry.computeBoundingSphere();
+					// Check block up
+					if (y === chunkBlockHeight - 1 || this.blocks[xyzToId(x, y + 1, z)] === 0)
+						blockFaces.push(planePrehabs.py.clone().applyMatrix4(matrix));
 
-    const texture = new TextureLoader().load("../../public/texture.png");
-    texture.colorSpace = SRGBColorSpace;
-    texture.magFilter = NearestFilter;
-    const mesh = new Mesh(
-      geometry,
-      new MeshBasicMaterial({ map: texture })
-      // new THREE.MeshStandardMaterial({ color: 0xff6347 })
-    );
-    Workspace.Scene.add(mesh);
-    this.generated = true;
-  }
+					// Check block down
+					if (y === 0 || this.blocks[xyzToId(x, y - 1, z)] === 0)
+						blockFaces.push(planePrehabs.ny.clone().applyMatrix4(matrix));
 
-  //   unloadBlocks() {
-  //     this.blocks.forEach((air, index) => {
-  //       if (index % 512 === 0 && index !== chunkBlockWidth) task.wait();
-  //       const block = getBlock(air);
-  //       if (block?.generated) {
-  //         block.part?.Destroy();
-  //         block.generated = false;
-  //       }
-  //     });
-  //     this.generated = false;
-  //   }
+					blockFaces.forEach((plane) => {
+						// const textureId = Math.round(Math.random() * 2);
+						// const textureId =
+						//   (this.chunkPosition.x % 2 === 0 &&
+						//     this.chunkPosition.z % 2 !== 0) ||
+						//   (this.chunkPosition.x % 2 !== 0 && this.chunkPosition.z % 2 === 0)
+						//     ? 1
+						//     : 0;
+
+						setPlaneUv(plane, blockId);
+						geometries.push(plane);
+					});
+				}
+			}
+		}
+
+		if (!geometries[0]) return;
+
+		// console.log(`${geometries.length} blocks`);
+		const geometry = mergeGeometries(geometries, true);
+		geometry.computeBoundingSphere();
+		return geometry;
+	}
+
+	//
+
+	Generate(): void {
+		console.log("generating chunk", this.chunkPosition);
+
+		if (!this.mesh) {
+			const texture = new TextureLoader().load("../../public/texture.png");
+			texture.colorSpace = SRGBColorSpace;
+			texture.magFilter = NearestFilter;
+			this.mesh = new Mesh(this.GenerateGeometry(), new MeshBasicMaterial({ map: texture }));
+			Workspace.Scene.add(this.mesh);
+		} else {
+			const geometry = this.GenerateGeometry();
+			if (!geometry) return;
+			this.mesh.geometry = geometry;
+		}
+		this.generated = true;
+	}
+
+	Destroy(): void {
+		if (this.mesh) {
+			Workspace.Scene.remove(this.mesh);
+			this.mesh.geometry.dispose();
+
+			if (Array.isArray(this.mesh.material)) {
+				this.mesh.material.forEach((m) => m.dispose());
+			} else {
+				this.mesh.material.dispose();
+			}
+		}
+
+		this.mesh = undefined;
+		this.blocks = [];
+		if (this.chunkFront?.chunkBack) this.chunkFront.chunkBack = undefined;
+		this.chunkFront = undefined;
+
+		if (this.chunkBack?.chunkFront) this.chunkBack.chunkFront = undefined;
+		this.chunkBack = undefined;
+
+		if (this.chunkRight?.chunkLeft) this.chunkRight.chunkLeft = undefined;
+		this.chunkRight = undefined;
+
+		if (this.chunkLeft?.chunkRight) this.chunkLeft.chunkRight = undefined;
+		this.chunkLeft = undefined;
+
+		this.generated = false;
+		this.loadedIn = false;
+	}
 }
 
 declare global {
-  type ChunkType = InstanceType<typeof Chunk>;
+	type ChunkType = InstanceType<typeof Chunk>;
 }
