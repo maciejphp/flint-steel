@@ -8,7 +8,7 @@ export function xyzToId(x: number, y: number, z: number): number {
 }
 
 export function positionToId(position: Vector3): number {
-	return position.x * chunkBlockHeight * chunkBlockWidth + position.y * chunkBlockWidth + position.z;
+	return xyzToId(position.x, position.y, position.z);
 }
 
 export function getWorldBlockPosition(blockPosition: Vector3, chunkPosition: Vector3): Vector3 {
@@ -18,6 +18,8 @@ export function getWorldBlockPosition(blockPosition: Vector3, chunkPosition: Vec
 	const localBlockPosition = blockPosition.multiplyScalar(blockSize);
 	return chunkWorldPosition.add(localBlockPosition);
 }
+
+export const getChunkId = (x: number, z: number): string => `${x},${z}`;
 
 export function getChunkBlockPosition(blockPosition: Vector3, chunkPosition: Vector3): Vector3 {
 	return blockPosition.sub(chunkPosition.multiplyScalar(blockSize * chunkBlockWidth)).divideScalar(blockSize);

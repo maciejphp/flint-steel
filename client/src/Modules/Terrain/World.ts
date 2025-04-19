@@ -1,4 +1,4 @@
-import { positionToId, xyzToId } from "../Functions";
+import { getChunkId } from "../Functions";
 import { Chunk } from "./Chunk";
 import { Vector3 } from "three";
 import "./BlockBreaking";
@@ -7,12 +7,13 @@ import { settings } from "../Settings";
 const { blockSize, chunkBlockWidth } = settings;
 
 export class World {
-	loadedChunks: Chunk[] = [];
+	loadedChunks = new Map<string, Chunk>();
 
 	LoadChunk(position: Vector3): Chunk {
 		// Create new "ghost" chunks
 		const chunk = new Chunk(position);
-		this.loadedChunks[positionToId(position)] = chunk;
+		this.loadedChunks.set(getChunkId(position.x, position.z), chunk);
+		// this.loadedChunks[positionToId(position)] = chunk;
 		return chunk;
 	}
 
@@ -20,14 +21,15 @@ export class World {
 		// Generate with blocks
 		const { x, z } = position;
 
-		const chunk = this.loadedChunks[xyzToId(x, 0, z)] || this.LoadChunk(position.clone());
+		const getChunk = (x: number, z: number) => this.loadedChunks.get(getChunkId(x, z));
 
-		chunk.chunkRight = this.loadedChunks[xyzToId(x + 1, 0, z)] || this.LoadChunk(position.clone().setX(x + 1));
-		chunk.chunkLeft = this.loadedChunks[xyzToId(x - 1, 0, z)] || this.LoadChunk(position.clone().setX(x - 1));
+		const chunk = getChunk(x, z) || this.LoadChunk(position.clone());
 
-		chunk.chunkFront = this.loadedChunks[xyzToId(x, 0, z + 1)] || this.LoadChunk(position.clone().setZ(z + 1));
+		chunk.chunkRight = getChunk(x + 1, z) || this.LoadChunk(position.clone().setX(x + 1));
+		chunk.chunkLeft = getChunk(x - 1, z) || this.LoadChunk(position.clone().setX(x - 1));
 
-		chunk.chunkBack = this.loadedChunks[xyzToId(x, 0, z - 1)] || this.LoadChunk(position.clone().setZ(z - 1));
+		chunk.chunkFront = getChunk(x, z + 1) || this.LoadChunk(position.clone().setZ(z + 1));
+		chunk.chunkBack = getChunk(x, z - 1) || this.LoadChunk(position.clone().setZ(z - 1));
 
 		chunk.Generate();
 	}
@@ -53,6 +55,7 @@ export class World {
 	//     collectgarbage("count");
 	//   }
 	DestroyChunk(chunk: Chunk): void {
+		this.loadedChunks.delete(getChunkId(chunk.chunkPosition.x, chunk.chunkPosition.z));
 		chunk.Destroy();
 	}
 
@@ -60,7 +63,7 @@ export class World {
 		let chunkPosition = blockPosition.clone().divideScalar(chunkBlockWidth * blockSize);
 		chunkPosition = new Vector3(Math.floor(chunkPosition.x), 0, Math.floor(chunkPosition.z));
 
-		const chunk = this.loadedChunks[positionToId(chunkPosition)];
+		const chunk = this.loadedChunks.get(getChunkId(chunkPosition.x, chunkPosition.z));
 		chunk?.DestroyBlock(blockPosition);
 	}
 
@@ -68,7 +71,8 @@ export class World {
 		let chunkPosition = blockPosition.clone().divideScalar(chunkBlockWidth * blockSize);
 		chunkPosition = new Vector3(Math.floor(chunkPosition.x), 0, Math.floor(chunkPosition.z));
 
-		const chunk = this.loadedChunks[positionToId(chunkPosition)];
+		// const chunk = this.loadedChunks[positionToId(chunkPosition)];
+		const chunk = this.loadedChunks.get(getChunkId(chunkPosition.x, chunkPosition.z));
 		chunk?.PlaceBlock(blockPosition);
 	}
 }

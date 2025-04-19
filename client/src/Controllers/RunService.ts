@@ -2,27 +2,27 @@ import { Workspace } from "./Workspace";
 import { Signal } from "../Utils/Signal";
 
 class Class {
-  private static instance: Class;
-  private PrevTime = performance.now();
+	private static instance: Class;
+	private PrevTime = performance.now();
 
-  RenderStepped = new Signal<number>();
+	RenderStepped = new Signal<number>();
 
-  private constructor() {
-    Workspace.Renderer.setAnimationLoop(() => {
-      const time = performance.now();
-      this.RenderStepped.Fire((time - this.PrevTime) / 1000);
-      this.PrevTime = time;
+	private constructor() {
+		Workspace.Renderer.setAnimationLoop(() => {
+			const time = performance.now();
+			this.RenderStepped.Fire((time - this.PrevTime) / 1000);
+			this.PrevTime = time;
 
-      Workspace.Renderer.render(Workspace.Scene, Workspace.Camera);
-    });
-  }
+			Workspace.Renderer.render(Workspace.Scene, Workspace.Camera);
+		});
+	}
 
-  public static get(): Class {
-    if (!Class.instance) {
-      Class.instance = new Class();
-    }
-    return Class.instance;
-  }
+	public static get(): Class {
+		if (!Class.instance) {
+			Class.instance = new Class();
+		}
+		return Class.instance;
+	}
 }
 
 export const RunService = Class.get();

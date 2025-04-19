@@ -2,7 +2,7 @@ import { World } from "../Modules/Terrain/World";
 import { Vector3 } from "three";
 import { RunService } from "./RunService";
 import { settings } from "../Modules/Settings";
-import { getChunkPosition, positionToId } from "../Modules/Functions";
+import { getChunkId, getChunkPosition, positionToId } from "../Modules/Functions";
 import { Workspace } from "./Workspace";
 
 class Class {
@@ -32,12 +32,11 @@ class Class {
 			this.World.loadedChunks.forEach((chunk) => {
 				const distance = chunk.chunkPosition.clone().sub(playerChunkPosition).length();
 				if (distance > settings.chunkUnloadDistance) {
-					console.log("destroying", distance, chunk.chunkPosition);
 					this.World.DestroyChunk(chunk);
 				}
 			});
 
-			console.log(`chunk count: ${this.World.loadedChunks.length}`);
+			// console.log(`chunk count: ${this.World.loadedChunks.length}`);
 		});
 	}
 
@@ -65,8 +64,10 @@ function getNearestUnloadedChunkPosition(position: Vector3): Vector3 | undefined
 	let dz = 0;
 
 	// Check center first
-	const centerId = positionToId(origin);
-	if (!WorldController.World.loadedChunks[centerId]?.generated) {
+	// const centerId = positionToId(origin);
+	if (!WorldController.World.loadedChunks.get(getChunkId(origin.x, origin.z))?.generated) {
+		// console.log("retuning cenetr");
+		// console.log(WorldController.World.loadedChunks.get(origin), origin, WorldController.World.loadedChunks);
 		return origin;
 	}
 
@@ -85,7 +86,7 @@ function getNearestUnloadedChunkPosition(position: Vector3): Vector3 | undefined
 				if (visited.has(id)) continue;
 				visited.add(id);
 
-				if (!WorldController.World.loadedChunks[id]?.generated) {
+				if (!WorldController.World.loadedChunks.get(getChunkId(checkPos.x, checkPos.z))?.generated) {
 					return checkPos;
 				}
 			}

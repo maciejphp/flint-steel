@@ -3,6 +3,6 @@ export const settings = {
 	chunkBlockWidth: 16,
 	chunkBlockHeight: 32,
 
-	renderDistance: 2,
-	chunkUnloadDistance: 6,
+	renderDistance: 3,
+	chunkUnloadDistance: 10,
 };

@@ -11,11 +11,11 @@ export function generateBlock(position: Vector3): number {
 	const { x, y, z } = position;
 
 	//   math.randomseed(positionToId(position));
-	const scale = 200; //80
-	const noiseValue = perlin.noise(x / scale, y / scale, z / scale);
+	const scale = 400; //80
+	let noiseValue = perlin.noise(x / scale, y / scale, z / scale);
 
-	// noiseValue += y / settings.chunkBlockHeight / 20;
-	// noiseValue += settings.chunkBlockHeight / y / 20;
+	noiseValue -= y / settings.chunkBlockHeight / 10;
+	noiseValue += settings.chunkBlockHeight / y;
 
 	// console.log(x, y, z, noiseValue);
 

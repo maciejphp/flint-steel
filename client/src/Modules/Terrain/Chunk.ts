@@ -10,10 +10,14 @@ import {
 	Matrix4,
 	PlaneGeometry,
 	BufferGeometry,
+	MeshPhongMaterial,
+	Vector4,
+	Plane,
 } from "three";
 import { generateBlock } from "./WorldGeneration";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { Workspace } from "../../Controllers/Workspace";
+import { ShadowMesh } from "three/examples/jsm/Addons.js";
 
 const { chunkBlockWidth, chunkBlockHeight, blockSize } = settings;
 const halfBlockSize = blockSize / 2;
@@ -192,13 +196,11 @@ export class Chunk {
 	//
 
 	Generate(): void {
-		console.log("generating chunk", this.chunkPosition);
-
 		if (!this.mesh) {
 			const texture = new TextureLoader().load("../../public/texture.png");
 			texture.colorSpace = SRGBColorSpace;
 			texture.magFilter = NearestFilter;
-			this.mesh = new Mesh(this.GenerateGeometry(), new MeshBasicMaterial({ map: texture }));
+			this.mesh = new Mesh(this.GenerateGeometry(), new MeshPhongMaterial({ map: texture }));
 			Workspace.Scene.add(this.mesh);
 		} else {
 			const geometry = this.GenerateGeometry();
