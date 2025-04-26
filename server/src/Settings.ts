@@ -2,9 +2,4 @@ export const Settings = {
 	blockSize: 8,
 	chunkBlockWidth: 16,
 	chunkBlockHeight: 32,
-
-	renderDistance: 3,
-	chunkUnloadDistance: 10,
-
-	server: "http://localhost:3000",
 };

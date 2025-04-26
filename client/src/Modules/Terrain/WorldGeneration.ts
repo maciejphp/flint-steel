@@ -1,9 +1,9 @@
 import { ImprovedNoise } from "three/examples/jsm/Addons.js";
 import { xyzToId } from "../Functions";
-import { settings } from "../Settings";
+import { Settings } from "../Settings";
 import { Vector3 } from "three";
 
-const { chunkBlockHeight, chunkBlockWidth } = settings;
+const { chunkBlockHeight, chunkBlockWidth } = Settings;
 
 const perlin = new ImprovedNoise();
 
@@ -14,8 +14,8 @@ export function generateBlock(position: Vector3): number {
 	const scale = 400; //80
 	let noiseValue = perlin.noise(x / scale, y / scale, z / scale);
 
-	noiseValue -= y / settings.chunkBlockHeight / 10;
-	noiseValue += settings.chunkBlockHeight / y;
+	noiseValue -= y / Settings.chunkBlockHeight / 10;
+	noiseValue += Settings.chunkBlockHeight / y;
 
 	// console.log(x, y, z, noiseValue);
 

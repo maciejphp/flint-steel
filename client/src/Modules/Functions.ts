@@ -1,7 +1,8 @@
 import { Vector3, BoxGeometry, BufferAttribute, PlaneGeometry } from "three";
-import { settings } from "./Settings";
+import { Settings } from "./Settings";
+import { AxiosResponse } from "axios";
 
-const { chunkBlockHeight, chunkBlockWidth, blockSize } = settings;
+const { chunkBlockHeight, chunkBlockWidth, blockSize } = Settings;
 
 export function xyzToId(x: number, y: number, z: number): number {
 	return x * chunkBlockHeight * chunkBlockWidth + y * chunkBlockWidth + z;
@@ -67,3 +68,19 @@ export function setPlaneUv(plane: PlaneGeometry, textureIndex: number): void {
 
 	plane.setAttribute("uv", new BufferAttribute(uv, 2));
 }
+
+export const handleResponse = (response: AxiosResponse): boolean => {
+	const success = response.data.error === undefined;
+
+	if (success) {
+		if (response.data.message) alert(response.data.message);
+	} else {
+		console.warn(response.data.error);
+	}
+
+	if (response.data.auth !== undefined && !response.data.auth) {
+		localStorage.removeItem("user");
+		window.location.href = "/login";
+	}
+	return success;
+};

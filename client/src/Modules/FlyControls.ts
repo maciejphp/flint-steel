@@ -103,12 +103,12 @@ export default (): void => {
 	const direction = new Vector3();
 	const movement = new Vector3();
 
-	const settings = {
+	const Settings = {
 		speed: 1500,
 	};
 
 	const gui = new GUI();
-	gui.add(settings, "speed", 10, 4000, 1);
+	gui.add(Settings, "speed", 10, 4000, 1);
 
 	RunService.RenderStepped.Connect((delta) => {
 		if (controls.isLocked === true) {
@@ -123,7 +123,7 @@ export default (): void => {
 				.normalize();
 
 			movement.copy(direction).applyQuaternion(controls.object.quaternion);
-			velocity.add(movement.multiplyScalar(settings.speed * delta));
+			velocity.add(movement.multiplyScalar(Settings.speed * delta));
 			controls.object.position.add(velocity.clone().multiplyScalar(delta));
 		}
 	});

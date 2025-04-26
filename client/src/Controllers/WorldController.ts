@@ -1,7 +1,7 @@
 import { World } from "../Modules/Terrain/World";
 import { Vector3 } from "three";
 import { RunService } from "./RunService";
-import { settings } from "../Modules/Settings";
+import { Settings } from "../Modules/Settings";
 import { getChunkId, getChunkPosition, positionToId } from "../Modules/Functions";
 import { Workspace } from "./Workspace";
 
@@ -16,27 +16,25 @@ class Class {
 	Start() {
 		// const worldSize = 6;
 		// for (let x = 0; x < worldSize; x++) {
-		//   for (let z = 0; z < worldSize; z++) {
-		//     this.World.GenerateChunk(new Vector3(x, 0, z));
-		//   }
+		// 	for (let z = 0; z < worldSize; z++) {
+		// 		this.World.GenerateChunk(new Vector3(x, 0, z));
+		// 	}
 		// }
 
+		// Gather chunks to generate
 		RunService.RenderStepped.Connect(() => {
 			const playerChunkPosition = getChunkPosition(Workspace.Camera.position.clone());
-
 			// Generate new chunk
-			const chunkPosition = getNearestUnloadedChunkPosition(playerChunkPosition.clone());
-			if (chunkPosition) this.World.GenerateChunk(chunkPosition);
+			fetchNearestChunks(playerChunkPosition);
 
 			// Onload far away chunk
-			this.World.loadedChunks.forEach((chunk) => {
+			this.World.LoadedChunks.forEach((chunk) => {
 				const distance = chunk.chunkPosition.clone().sub(playerChunkPosition).length();
-				if (distance > settings.chunkUnloadDistance) {
+				if (distance > Settings.chunkUnloadDistance) {
 					this.World.DestroyChunk(chunk);
 				}
 			});
-
-			// console.log(`chunk count: ${this.World.loadedChunks.length}`);
+			// console.log(`chunk count: ${this.World.LoadedChunks.length}`);
 		});
 	}
 
@@ -48,57 +46,76 @@ class Class {
 	}
 }
 
-function getNearestUnloadedChunkPosition(position: Vector3): Vector3 | undefined {
-	const origin = position.clone();
-	const visited = new Set();
+function fetchNearestChunks(center: Vector3): void {
+	const minX = center.x - Settings.renderDistance;
+	const maxX = center.x + Settings.renderDistance;
+	const minZ = center.z - Settings.renderDistance;
+	const maxZ = center.z + Settings.renderDistance;
 
-	const directions = [
-		new Vector3(1, 0, 0), // right
-		new Vector3(0, 0, -1), // down
-		new Vector3(-1, 0, 0), // left
-		new Vector3(0, 0, 1), // up
-	];
+	for (let x = minX; x <= maxX; x += 1) {
+		for (let z = minZ; z <= maxZ; z += 1) {
+			const distance = Math.sqrt((center.x - x) ** 2 + (center.z - z) ** 2);
+			if (distance > Settings.renderDistance) continue;
 
-	let step = 1;
-	let dx = 0;
-	let dz = 0;
+			// positions.push(new Vector3(x, center.y, z));
+			const chunk = WorldController.World.LoadedChunks.get(getChunkId(x, z));
+			// console.log("chunk", chunk);
+			// if (chunk === undefined || (chunk.fetched && !chunk.generated)) return origin;
 
-	// Check center first
-	// const centerId = positionToId(origin);
-	if (!WorldController.World.loadedChunks.get(getChunkId(origin.x, origin.z))?.generated) {
-		// console.log("retuning cenetr");
-		// console.log(WorldController.World.loadedChunks.get(origin), origin, WorldController.World.loadedChunks);
-		return origin;
-	}
-
-	for (let radius = 1; radius <= settings.renderDistance; radius++) {
-		for (let dirIndex = 0; dirIndex < 4; dirIndex++) {
-			const dir = directions[dirIndex];
-
-			// Move `step` times in this direction
-			for (let i = 0; i < step; i++) {
-				dx += dir.x;
-				dz += dir.z;
-
-				const checkPos = origin.clone().add(new Vector3(dx, 0, dz));
-				const id = positionToId(checkPos);
-
-				if (visited.has(id)) continue;
-				visited.add(id);
-
-				if (!WorldController.World.loadedChunks.get(getChunkId(checkPos.x, checkPos.z))?.generated) {
-					return checkPos;
-				}
-			}
-
-			// Every two directions, increase the step count (spiral grows)
-			if (dirIndex % 2 === 1) {
-				step++;
+			if (chunk === undefined || (chunk.fetched && !chunk.generated)) {
+				WorldController.World.GenerateChunk(new Vector3(x, 0, z));
 			}
 		}
 	}
 
-	return undefined; // Nothing found
+	// return positions;
+
+	// const visited = new Set();
+
+	// const directions = [
+	// 	new Vector3(1, 0, 0), // right
+	// 	new Vector3(0, 0, -1), // down
+	// 	new Vector3(-1, 0, 0), // left
+	// 	new Vector3(0, 0, 1), // up
+	// ];
+
+	// let step = 1;
+	// let dx = 0;
+	// let dz = 0;
+
+	// // Check center first
+	// // const centerId = positionToId(origin);
+	// const chunk = WorldController.World.LoadedChunks.get(getChunkId(origin.x, origin.z));
+	// // console.log("chunk", chunk);
+	// if (chunk === undefined || (chunk.fetched && !chunk.generated)) return origin;
+
+	// for (let Settings.renderDistance; = 1; Settings.renderDistance; <= Settings.renderDistance; Settings.renderDistance;++) {
+	// 	for (let dirIndex = 0; dirIndex < 4; dirIndex++) {
+	// 		const dir = directions[dirIndex];
+
+	// 		// Move `step` times in this direction
+	// 		for (let i = 0; i < step; i++) {
+	// 			dx += dir.x;
+	// 			dz += dir.z;
+
+	// 			const checkPos = origin.clone().add(new Vector3(dx, 0, dz));
+	// 			const id = positionToId(checkPos);
+
+	// 			if (visited.has(id)) continue;
+	// 			visited.add(id);
+
+	// 			const chunk = WorldController.World.LoadedChunks.get(getChunkId(checkPos.x, checkPos.z));
+	// 			if (chunk === undefined || (chunk.fetched && !chunk.generated)) return checkPos;
+	// 		}
+
+	// 		// Every two directions, increase the step count (spiral grows)
+	// 		if (dirIndex % 2 === 1) {
+	// 			step++;
+	// 		}
+	// 	}
+	// }
+
+	// return undefined; // Nothing found
 }
 
 export const WorldController = Class.get();

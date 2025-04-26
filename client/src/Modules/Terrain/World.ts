@@ -2,18 +2,58 @@ import { getChunkId } from "../Functions";
 import { Chunk } from "./Chunk";
 import { Vector3 } from "three";
 import "./BlockBreaking";
-import { settings } from "../Settings";
+import { Settings } from "../Settings";
+import { RunService } from "../../Controllers/RunService";
+import { ServerController } from "../../Controllers/ServerController";
 
-const { blockSize, chunkBlockWidth } = settings;
+const { blockSize, chunkBlockWidth } = Settings;
 
 export class World {
-	loadedChunks = new Map<string, Chunk>();
+	LoadedChunks = new Map<string, Chunk>();
+	ChunkFetchQueue: Chunk[] = [];
+	ChunkGenerateQueue: Chunk[] = [];
+
+	constructor() {
+		// Fetch chunks
+		RunService.RenderStepped.Connect(async () => {
+			// Render 1 chunk at a time
+			this.ChunkGenerateQueue.shift()?.Generate();
+
+			// Fetch chunks
+			if (this.ChunkFetchQueue.length === 0) return;
+
+			const chunkPositions = this.ChunkFetchQueue.map((chunk) => chunk.chunkPosition);
+			this.ChunkFetchQueue = [];
+			const [chunkData, success] = await ServerController.GetChunkData(chunkPositions);
+			if (!success) {
+				console.warn("Failed to fetch chunk data");
+				return;
+			}
+			Object.entries(chunkData).forEach(([key, value]) => {
+				const chunk = this.LoadedChunks.get(key);
+				if (!chunk) return;
+				chunk.blocks = value;
+				chunk.fetched = true;
+			});
+		});
+
+		// Handle block breaking
+		ServerController.Socket.on("breakBlock", (data) => {
+			this.DestroyBlock(new Vector3(data.BlockPosition.x, data.BlockPosition.y, data.BlockPosition.z));
+		});
+
+		// Handle block placing
+		ServerController.Socket.on("placeBlock", (data) => {
+			this.PlaceBlock(new Vector3(data.BlockPosition.x, data.BlockPosition.y, data.BlockPosition.z));
+		});
+	}
 
 	LoadChunk(position: Vector3): Chunk {
 		// Create new "ghost" chunks
 		const chunk = new Chunk(position);
-		this.loadedChunks.set(getChunkId(position.x, position.z), chunk);
-		// this.loadedChunks[positionToId(position)] = chunk;
+		this.LoadedChunks.set(getChunkId(position.x, position.z), chunk);
+		this.ChunkFetchQueue.push(chunk);
+		chunk.insideFetchQueue = true;
 		return chunk;
 	}
 
@@ -21,41 +61,31 @@ export class World {
 		// Generate with blocks
 		const { x, z } = position;
 
-		const getChunk = (x: number, z: number) => this.loadedChunks.get(getChunkId(x, z));
+		const getChunk = (x: number, z: number) => this.LoadedChunks.get(getChunkId(x, z));
+		const ensureChunk = (x: number, z: number) => getChunk(x, z) ?? this.LoadChunk(new Vector3(x, 0, z));
 
 		const chunk = getChunk(x, z) || this.LoadChunk(position.clone());
 
-		chunk.chunkRight = getChunk(x + 1, z) || this.LoadChunk(position.clone().setX(x + 1));
-		chunk.chunkLeft = getChunk(x - 1, z) || this.LoadChunk(position.clone().setX(x - 1));
+		// console.log("Generating chunk", position);
 
-		chunk.chunkFront = getChunk(x, z + 1) || this.LoadChunk(position.clone().setZ(z + 1));
-		chunk.chunkBack = getChunk(x, z - 1) || this.LoadChunk(position.clone().setZ(z - 1));
+		chunk.chunkRight = ensureChunk(x + 1, z);
+		chunk.chunkLeft = ensureChunk(x - 1, z);
+		chunk.chunkFront = ensureChunk(x, z + 1);
+		chunk.chunkBack = ensureChunk(x, z - 1);
 
-		chunk.Generate();
+		if (
+			chunk.chunkRight.fetched &&
+			chunk.chunkLeft.fetched &&
+			chunk.chunkFront.fetched &&
+			chunk.chunkBack.fetched
+		) {
+			this.ChunkGenerateQueue.push(chunk);
+			chunk.generated = true;
+		}
 	}
 
-	//   unloadChunk(chunkPosition: Vector3) {
-	//     const unloadedChunk =
-	//       this.loadedChunks[xyzToId(chunkPosition.X, 0, chunkPosition.Z)];
-
-	//     unloadedChunk.unloadBlocks();
-	//     unloadedChunk.blockFolder.Destroy();
-	//     unloadedChunk.blocks = [];
-
-	//     // Delete chunk to allow garbage collection
-	//     this.loadedChunks.forEach((chunk) => {
-	//         chunk.chunkRight = undefined;
-	//         chunk.chunkLeft = undefined;
-	//         chunk.chunkFront = undefined;
-	//         chunk.chunkBack = undefined;
-	//       }
-	//     });
-
-	//     delete this.loadedChunks[positionToId(chunkPosition)];
-	//     collectgarbage("count");
-	//   }
 	DestroyChunk(chunk: Chunk): void {
-		this.loadedChunks.delete(getChunkId(chunk.chunkPosition.x, chunk.chunkPosition.z));
+		this.LoadedChunks.delete(getChunkId(chunk.chunkPosition.x, chunk.chunkPosition.z));
 		chunk.Destroy();
 	}
 
@@ -63,7 +93,7 @@ export class World {
 		let chunkPosition = blockPosition.clone().divideScalar(chunkBlockWidth * blockSize);
 		chunkPosition = new Vector3(Math.floor(chunkPosition.x), 0, Math.floor(chunkPosition.z));
 
-		const chunk = this.loadedChunks.get(getChunkId(chunkPosition.x, chunkPosition.z));
+		const chunk = this.LoadedChunks.get(getChunkId(chunkPosition.x, chunkPosition.z));
 		chunk?.DestroyBlock(blockPosition);
 	}
 
@@ -71,8 +101,8 @@ export class World {
 		let chunkPosition = blockPosition.clone().divideScalar(chunkBlockWidth * blockSize);
 		chunkPosition = new Vector3(Math.floor(chunkPosition.x), 0, Math.floor(chunkPosition.z));
 
-		// const chunk = this.loadedChunks[positionToId(chunkPosition)];
-		const chunk = this.loadedChunks.get(getChunkId(chunkPosition.x, chunkPosition.z));
+		// const chunk = this.LoadedChunks[positionToId(chunkPosition)];
+		const chunk = this.LoadedChunks.get(getChunkId(chunkPosition.x, chunkPosition.z));
 		chunk?.PlaceBlock(blockPosition);
 	}
 }

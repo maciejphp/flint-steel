@@ -29,7 +29,7 @@ export default (): void => {
 	light.position.set(10, 20, 10);
 	light.castShadow = true;
 
-	// Shadow settings (bigger area = more coverage)
+	// Shadow Settings (bigger area = more coverage)
 	light.shadow.mapSize.set(10240, 10240);
 	light.shadow.camera.left = -2000;
 	light.shadow.camera.right = 2000;

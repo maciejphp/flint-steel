@@ -1,25 +1,21 @@
 import { getChunkBlockPosition, getWorldBlockPosition, positionToId, setPlaneUv, xyzToId } from "../Functions";
-import { settings } from "../Settings";
+import { Settings } from "../Settings";
 import {
 	Vector3,
 	TextureLoader,
 	SRGBColorSpace,
 	NearestFilter,
 	Mesh,
-	MeshBasicMaterial,
 	Matrix4,
 	PlaneGeometry,
 	BufferGeometry,
 	MeshPhongMaterial,
-	Vector4,
-	Plane,
 } from "three";
-import { generateBlock } from "./WorldGeneration";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { Workspace } from "../../Controllers/Workspace";
-import { ShadowMesh } from "three/examples/jsm/Addons.js";
+import { ServerController } from "../../Controllers/ServerController";
 
-const { chunkBlockWidth, chunkBlockHeight, blockSize } = settings;
+const { chunkBlockWidth, chunkBlockHeight, blockSize } = Settings;
 const halfBlockSize = blockSize / 2;
 const halfPi = Math.PI / 2;
 
@@ -44,24 +40,37 @@ export class Chunk {
 	chunkBack?: Chunk;
 	chunkRight?: Chunk;
 	chunkLeft?: Chunk;
-	generated = false;
-	loadedIn = false;
 	mesh?: Mesh;
+	generated = false;
+	fetched = false;
+	insideFetchQueue = false;
+	insideGenerateQueue = false;
 
 	constructor(chunkPosition: Vector3) {
 		this.chunkPosition = chunkPosition;
 
 		//Create new "Ghost" blocks
-		for (let x = 0; x < chunkBlockWidth; x++) {
-			for (let y = 0; y < chunkBlockHeight; y++) {
-				for (let z = 0; z < chunkBlockWidth; z++) {
-					const chunkBlockPosition = new Vector3(x, y, z);
-					const worldBlockPosition = getWorldBlockPosition(chunkBlockPosition.clone(), chunkPosition.clone());
-					this.blocks.push(generateBlock(worldBlockPosition));
-				}
-			}
+		// for (let x = 0; x < chunkBlockWidth; x++) {
+		// 	for (let y = 0; y < chunkBlockHeight; y++) {
+		// 		for (let z = 0; z < chunkBlockWidth; z++) {
+		// 			const chunkBlockPosition = new Vector3(x, y, z);
+		// 			const worldBlockPosition = getWorldBlockPosition(chunkBlockPosition.clone(), chunkPosition.clone());
+		// 			this.blocks.push(generateBlock(worldBlockPosition));
+		// 		}
+		// 	}
+		// }
+	}
+
+	private async Fetch(): Promise<void> {
+		console.log("Fetching chunk data", this.chunkPosition);
+		// Fetch chunk data from server
+		const [chunkData, success] = await ServerController.GetChunkData([this.chunkPosition]);
+		if (!success) {
+			console.warn("Failed to fetch chunk data");
+			return;
 		}
-		this.loadedIn = true;
+		this.blocks = chunkData[0];
+		this.fetched = true;
 	}
 
 	//
@@ -196,6 +205,18 @@ export class Chunk {
 	//
 
 	Generate(): void {
+		if (!this.fetched) {
+			console.warn("Chunk not fetched yet");
+			return;
+		}
+
+		// console.log(
+		// 	this.chunkFront?.fetched,
+		// 	this.chunkBack?.fetched,
+		// 	this.chunkLeft?.fetched,
+		// 	this.chunkRight?.fetched,
+		// );
+
 		if (!this.mesh) {
 			const texture = new TextureLoader().load("../../public/texture.png");
 			texture.colorSpace = SRGBColorSpace;
@@ -237,7 +258,7 @@ export class Chunk {
 		this.chunkLeft = undefined;
 
 		this.generated = false;
-		this.loadedIn = false;
+		this.fetched = false;
 	}
 }
 
