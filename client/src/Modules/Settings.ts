@@ -6,5 +6,6 @@ export const Settings = {
 	renderDistance: 5,
 	chunkUnloadDistance: 20,
 
-	server: "http://localhost:3000",
+	// server: "http://localhost:3000",
+	server: "https://flint-and-steel.glitch.me",
 };

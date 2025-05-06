@@ -199,7 +199,10 @@ export class Chunk {
 		}
 
 		if (!this.mesh) {
-			const texture = new TextureLoader().load("../../public/texture.png");
+			// const texture = new TextureLoader().load("../../public/texture.png");
+			const texture = new TextureLoader().load(
+				"https://raw.githubusercontent.com/maciejphp/flint-steel/refs/heads/main/client/public/texture.png",
+			);
 			texture.colorSpace = SRGBColorSpace;
 			texture.magFilter = NearestFilter;
 			this.mesh = new Mesh(this.GenerateGeometry(), new MeshPhongMaterial({ map: texture }));

@@ -4,7 +4,12 @@ import dotenv from "dotenv";
 import http from "http";
 import { Server as SocketIO } from "socket.io";
 
-const allowedOrigins = ["https://m.machat.workers.dev", "http://localhost:5173", "http://localhost:5174"];
+const allowedOrigins = [
+	"https://m.machat.workers.dev",
+	"http://localhost:5173",
+	"http://localhost:5174",
+	"https://flint-steel-n0nbgyw82-maciejs-projects-129eee01.vercel.app",
+];
 
 dotenv.config();
 const app = express();

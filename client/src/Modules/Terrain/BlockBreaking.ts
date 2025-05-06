@@ -28,7 +28,7 @@ window.addEventListener("mousedown", (e) => {
 						Math.round(blockPosition.z),
 					).multiplyScalar(BlockSize);
 
-					// WorldController.World.DestroyBlock(blockPosition);
+					WorldController.World.DestroyBlock(blockPosition);
 					const chunkPosition = getChunkPosition(blockPosition.clone());
 					const chunk = WorldController.World.LoadedChunks.get(getChunkId(chunkPosition.x, chunkPosition.z));
 					if (chunk) {
@@ -59,7 +59,7 @@ window.addEventListener("mousedown", (e) => {
 						Math.round(blockPosition.z),
 					).multiplyScalar(BlockSize);
 
-					// WorldController.World.DestroyBlock(blockPosition);
+					WorldController.World.PlaceBlock(blockPosition);
 					const chunkPosition = getChunkPosition(blockPosition.clone());
 					const chunk = WorldController.World.LoadedChunks.get(getChunkId(chunkPosition.x, chunkPosition.z));
 					if (chunk) {
