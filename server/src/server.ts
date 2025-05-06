@@ -42,6 +42,8 @@ app.set("trust proxy", 1);
 app.use(express.json());
 
 import worldApi from "./worldApi.js";
+import { WorldService } from "./Services/WorldService.js";
+import { getChunkId } from "./Functions.js";
 app.use("/world", worldApi);
 
 app.get("/", (req, res) => {
@@ -53,12 +55,15 @@ app.get("/", (req, res) => {
 // });
 
 io.on("connection", (socket) => {
-	socket.on("breakBlock", (data) => {
-		io.emit("breakBlock", data);
-	});
-
-	socket.on("placeBlock", (data) => {
-		io.emit("placeBlock", data);
+	socket.on("updateBlock", async (data: { ChunkPosition: Vector2; PositionId: number; BlockId: number }) => {
+		const { ChunkPosition, PositionId, BlockId } = data;
+		const chunk = await WorldService.GetChunk(ChunkPosition);
+		if (chunk && chunk[PositionId] !== undefined) {
+			const chunkId = getChunkId(ChunkPosition.x, ChunkPosition.z);
+			chunk[data.PositionId] = BlockId;
+			WorldService.ModifiedChunks[chunkId] = chunk;
+			io.emit("updateBlock", { ChunkId: chunkId, PositionId, BlockId });
+		}
 	});
 
 	console.log("a user connected");

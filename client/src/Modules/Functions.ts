@@ -2,28 +2,41 @@ import { Vector3, BoxGeometry, BufferAttribute, PlaneGeometry } from "three";
 import { Settings } from "./Settings";
 import { AxiosResponse } from "axios";
 
-const { chunkBlockHeight, chunkBlockWidth, blockSize } = Settings;
+const { ChunkBlockHeight, ChunkBlockWidth, BlockSize } = Settings;
 
 export function xyzToId(x: number, y: number, z: number): number {
-	return x * chunkBlockHeight * chunkBlockWidth + y * chunkBlockWidth + z;
+	return x * ChunkBlockHeight * ChunkBlockWidth + y * ChunkBlockWidth + z;
 }
 
 export function positionToId(position: Vector3): number {
 	return xyzToId(position.x, position.y, position.z);
 }
 
+export function idToPosition(id: number): Vector3 {
+	const Z = id % ChunkBlockWidth;
+	const Y = Math.floor(id / ChunkBlockWidth) % ChunkBlockHeight;
+	const X = Math.floor(id / (ChunkBlockWidth * ChunkBlockHeight));
+	return new Vector3(X, Y, Z);
+}
+
 export function getWorldBlockPosition(blockPosition: Vector3, chunkPosition: Vector3): Vector3 {
 	const chunkWorldPosition = chunkPosition
-		.multiply(new Vector3(chunkBlockWidth, chunkBlockHeight, chunkBlockWidth))
-		.multiplyScalar(blockSize);
-	const localBlockPosition = blockPosition.multiplyScalar(blockSize);
+		.multiply(new Vector3(ChunkBlockWidth, ChunkBlockHeight, ChunkBlockWidth))
+		.multiplyScalar(BlockSize);
+	const localBlockPosition = blockPosition.multiplyScalar(BlockSize);
 	return chunkWorldPosition.add(localBlockPosition);
+}
+
+export function getByteSize(obj: unknown): number {
+	const str = JSON.stringify(obj);
+	// UTF-8 encoding: 1 char = 1-4 bytes (depends on character)
+	return new TextEncoder().encode(str).length;
 }
 
 export const getChunkId = (x: number, z: number): string => `${x},${z}`;
 
 export function getChunkBlockPosition(blockPosition: Vector3, chunkPosition: Vector3): Vector3 {
-	return blockPosition.sub(chunkPosition.multiplyScalar(blockSize * chunkBlockWidth)).divideScalar(blockSize);
+	return blockPosition.sub(chunkPosition.multiplyScalar(BlockSize * ChunkBlockWidth)).divideScalar(BlockSize);
 }
 
 const totalTextures = 3;
@@ -46,7 +59,7 @@ export function setBoxUv(box: BoxGeometry, textureIndex: number): void {
 }
 
 export function getChunkPosition(blockPosition: Vector3): Vector3 {
-	const chunkPosition = blockPosition.divideScalar(chunkBlockWidth * blockSize);
+	const chunkPosition = blockPosition.divideScalar(ChunkBlockWidth * BlockSize);
 	return new Vector3(Math.floor(chunkPosition.x), 0, Math.floor(chunkPosition.z));
 }
 

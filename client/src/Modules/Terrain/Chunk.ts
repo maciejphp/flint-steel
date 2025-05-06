@@ -1,4 +1,11 @@
-import { getChunkBlockPosition, getWorldBlockPosition, positionToId, setPlaneUv, xyzToId } from "../Functions";
+import {
+	getChunkBlockPosition,
+	getWorldBlockPosition,
+	idToPosition,
+	positionToId,
+	setPlaneUv,
+	xyzToId,
+} from "../Functions";
 import { Settings } from "../Settings";
 import {
 	Vector3,
@@ -13,24 +20,23 @@ import {
 } from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { Workspace } from "../../Controllers/Workspace";
-import { ServerController } from "../../Controllers/ServerController";
 
-const { chunkBlockWidth, chunkBlockHeight, blockSize } = Settings;
-const halfBlockSize = blockSize / 2;
+const { ChunkBlockWidth, ChunkBlockHeight, BlockSize } = Settings;
+const halfBlockSize = BlockSize / 2;
 const halfPi = Math.PI / 2;
 
 const planePrehabs = {
-	px: new PlaneGeometry(blockSize, blockSize).rotateY(halfPi).translate(halfBlockSize, 0, 0),
+	px: new PlaneGeometry(BlockSize, BlockSize).rotateY(halfPi).translate(halfBlockSize, 0, 0),
 
-	nx: new PlaneGeometry(blockSize, blockSize).rotateY(-halfPi).translate(-halfBlockSize, 0, 0),
+	nx: new PlaneGeometry(BlockSize, BlockSize).rotateY(-halfPi).translate(-halfBlockSize, 0, 0),
 
-	py: new PlaneGeometry(blockSize, blockSize).rotateX(-halfPi).translate(0, halfBlockSize, 0),
+	py: new PlaneGeometry(BlockSize, BlockSize).rotateX(-halfPi).translate(0, halfBlockSize, 0),
 
-	ny: new PlaneGeometry(blockSize, blockSize).rotateX(halfPi).translate(0, -halfBlockSize, 0),
+	ny: new PlaneGeometry(BlockSize, BlockSize).rotateX(halfPi).translate(0, -halfBlockSize, 0),
 
-	pz: new PlaneGeometry(blockSize, blockSize).translate(0, 0, halfBlockSize),
+	pz: new PlaneGeometry(BlockSize, BlockSize).translate(0, 0, halfBlockSize),
 
-	nz: new PlaneGeometry(blockSize, blockSize).rotateY(Math.PI).translate(0, 0, -halfBlockSize),
+	nz: new PlaneGeometry(BlockSize, BlockSize).rotateY(Math.PI).translate(0, 0, -halfBlockSize),
 };
 
 export class Chunk {
@@ -48,32 +54,23 @@ export class Chunk {
 
 	constructor(chunkPosition: Vector3) {
 		this.chunkPosition = chunkPosition;
-
-		//Create new "Ghost" blocks
-		// for (let x = 0; x < chunkBlockWidth; x++) {
-		// 	for (let y = 0; y < chunkBlockHeight; y++) {
-		// 		for (let z = 0; z < chunkBlockWidth; z++) {
-		// 			const chunkBlockPosition = new Vector3(x, y, z);
-		// 			const worldBlockPosition = getWorldBlockPosition(chunkBlockPosition.clone(), chunkPosition.clone());
-		// 			this.blocks.push(generateBlock(worldBlockPosition));
-		// 		}
-		// 	}
-		// }
-	}
-
-	private async Fetch(): Promise<void> {
-		console.log("Fetching chunk data", this.chunkPosition);
-		// Fetch chunk data from server
-		const [chunkData, success] = await ServerController.GetChunkData([this.chunkPosition]);
-		if (!success) {
-			console.warn("Failed to fetch chunk data");
-			return;
-		}
-		this.blocks = chunkData[0];
-		this.fetched = true;
 	}
 
 	//
+
+	UpdateBlockFromPositionId(positionId: number, blockId: number): void {
+		console.log(positionId, blockId);
+		const chunkBlockPosition = idToPosition(positionId);
+		this.blocks[positionId] = blockId;
+
+		if (!this.mesh) return;
+		this.Generate();
+
+		if (chunkBlockPosition.x === 0 && this.chunkLeft?.generated) this.chunkLeft.Generate();
+		else if (chunkBlockPosition.x === ChunkBlockWidth - 1 && this.chunkRight?.generated) this.chunkRight.Generate();
+		if (chunkBlockPosition.z === 0 && this.chunkBack?.generated) this.chunkBack.Generate();
+		else if (chunkBlockPosition.z === ChunkBlockWidth - 1 && this.chunkFront?.generated) this.chunkFront.Generate();
+	}
 
 	DestroyBlock(blockPosition: Vector3): void {
 		if (!this.mesh) return;
@@ -84,18 +81,9 @@ export class Chunk {
 		this.Generate();
 
 		if (chunkBlockPosition.x === 0 && this.chunkLeft?.generated) this.chunkLeft.Generate();
-		else if (chunkBlockPosition.x === chunkBlockWidth - 1 && this.chunkRight?.generated) this.chunkRight.Generate();
+		else if (chunkBlockPosition.x === ChunkBlockWidth - 1 && this.chunkRight?.generated) this.chunkRight.Generate();
 		if (chunkBlockPosition.z === 0 && this.chunkBack?.generated) this.chunkBack.Generate();
-		else if (chunkBlockPosition.z === chunkBlockWidth - 1 && this.chunkFront?.generated) this.chunkFront.Generate();
-
-		// Update chunk
-
-		// const box = new Mesh(
-		//   new BoxGeometry(),
-		//   new MeshBasicMaterial({ color: "red" })
-		// );
-		// box.position.set(blockPosition.x, blockPosition.y, blockPosition.z);
-		// Workspace.Scene.add(box);
+		else if (chunkBlockPosition.z === ChunkBlockWidth - 1 && this.chunkFront?.generated) this.chunkFront.Generate();
 	}
 
 	//
@@ -104,7 +92,7 @@ export class Chunk {
 
 		const chunkBlockPosition = getChunkBlockPosition(blockPosition.clone(), this.chunkPosition.clone());
 
-		if (chunkBlockPosition.y < 0 || chunkBlockPosition.y >= chunkBlockHeight) return;
+		if (chunkBlockPosition.y < 0 || chunkBlockPosition.y >= ChunkBlockHeight) return;
 
 		this.blocks[xyzToId(chunkBlockPosition.x, chunkBlockPosition.y, chunkBlockPosition.z)] = 3;
 
@@ -117,15 +105,15 @@ export class Chunk {
 		const geometries: PlaneGeometry[] = [];
 
 		//Do a check to see if the block visible. Don't render otherwise
-		for (let x = 0; x < chunkBlockWidth; x++) {
-			//   if (x % 2 === 0 && x !== chunkBlockWidth) task.wait();
-			for (let y = 0; y < chunkBlockHeight; y++) {
-				for (let z = 0; z < chunkBlockWidth; z++) {
+		for (let x = 0; x < ChunkBlockWidth; x++) {
+			//   if (x % 2 === 0 && x !== ChunkBlockWidth) task.wait();
+			for (let y = 0; y < ChunkBlockHeight; y++) {
+				for (let z = 0; z < ChunkBlockWidth; z++) {
 					// const air = this.blocks[xyzToId(x, y, z)];
 
 					//   console.log(this.blocks[xyzToId(x, y, z)]);
-					const blockId = this.blocks[xyzToId(x, y, z)];
-					if (blockId === 0) continue;
+					const positionId = this.blocks[xyzToId(x, y, z)];
+					if (positionId === 0) continue;
 
 					const chunkBlockPosition = new Vector3(x, y, z);
 					const worldBlockPosition = getWorldBlockPosition(
@@ -140,7 +128,7 @@ export class Chunk {
 
 					// Check block right
 					if (
-						(x + 1 === chunkBlockWidth
+						(x + 1 === ChunkBlockWidth
 							? this.chunkRight?.blocks[xyzToId(0, y, z)]
 							: this.blocks[xyzToId(x + 1, y, z)]) === 0
 					)
@@ -149,14 +137,14 @@ export class Chunk {
 					// Check block left
 					if (
 						(x === 0
-							? this.chunkLeft?.blocks[xyzToId(chunkBlockWidth - 1, y, z)]
+							? this.chunkLeft?.blocks[xyzToId(ChunkBlockWidth - 1, y, z)]
 							: this.blocks[xyzToId(x - 1, y, z)]) === 0
 					)
 						blockFaces.push(planePrehabs.nx.clone().applyMatrix4(matrix));
 
 					// Check block front
 					if (
-						(z + 1 === chunkBlockWidth
+						(z + 1 === ChunkBlockWidth
 							? this.chunkFront?.blocks[xyzToId(x, y, 0)]
 							: this.blocks[xyzToId(x, y, z + 1)]) === 0
 					)
@@ -165,13 +153,13 @@ export class Chunk {
 					// Check block back
 					if (
 						(z === 0
-							? this.chunkBack?.blocks[xyzToId(x, y, chunkBlockWidth - 1)]
+							? this.chunkBack?.blocks[xyzToId(x, y, ChunkBlockWidth - 1)]
 							: this.blocks[xyzToId(x, y, z - 1)]) === 0
 					)
 						blockFaces.push(planePrehabs.nz.clone().applyMatrix4(matrix));
 
 					// Check block up
-					if (y === chunkBlockHeight - 1 || this.blocks[xyzToId(x, y + 1, z)] === 0)
+					if (y === ChunkBlockHeight - 1 || this.blocks[xyzToId(x, y + 1, z)] === 0)
 						blockFaces.push(planePrehabs.py.clone().applyMatrix4(matrix));
 
 					// Check block down
@@ -187,7 +175,7 @@ export class Chunk {
 						//     ? 1
 						//     : 0;
 
-						setPlaneUv(plane, blockId);
+						setPlaneUv(plane, positionId);
 						geometries.push(plane);
 					});
 				}
@@ -209,13 +197,6 @@ export class Chunk {
 			console.warn("Chunk not fetched yet");
 			return;
 		}
-
-		// console.log(
-		// 	this.chunkFront?.fetched,
-		// 	this.chunkBack?.fetched,
-		// 	this.chunkLeft?.fetched,
-		// 	this.chunkRight?.fetched,
-		// );
 
 		if (!this.mesh) {
 			const texture = new TextureLoader().load("../../public/texture.png");

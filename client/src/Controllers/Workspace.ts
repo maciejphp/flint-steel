@@ -13,7 +13,7 @@ class Class {
 
 		this.Scene = new Scene();
 		this.Scene.background = new Color(0xbfd1e5);
-		this.Scene.fog = new Fog(0xbfd1e5, 0, 1000000); // 0xffffff for that og minecraft fog
+		this.Scene.fog = new Fog(0xbfd1e5, 300, 2000); // 0xffffff for that og minecraft fog
 
 		this.Renderer = new WebGLRenderer({ antialias: true });
 		this.Renderer.setPixelRatio(window.devicePixelRatio);

@@ -1,38 +1,30 @@
-import {
-	AmbientLight,
-	BasicShadowMap,
-	BoxGeometry,
-	CameraHelper,
-	DirectionalLight,
-	HemisphereLight,
-	Mesh,
-	MeshStandardMaterial,
-	PCFSoftShadowMap,
-	PlaneGeometry,
-} from "three";
+import { DirectionalLight } from "three";
 import { Workspace } from "../Controllers/Workspace";
 import { WorldController } from "../Controllers/WorldController";
-import { GUI } from "three/addons/libs/lil-gui.module.min.js";
-import { RunService } from "../Controllers/RunService";
 
 export default (): void => {
 	const scene = Workspace.Scene;
 
 	WorldController.Start();
 
-	const ambientLight = new AmbientLight(0xeeeeee, 1);
-	scene.add(ambientLight);
-
-	// const hemiLight = new HemisphereLight(0xffffff, 0x8d8d8d, 3);
-	// hemiLight.position.set(0, 20, 0);
-	// scene.add(hemiLight);
-
-	const dirLight = new DirectionalLight(0xffffff, 2);
-	dirLight.position.set(-3, 10, -8);
+	const dirLight = new DirectionalLight(0xffffff, 1.5);
+	dirLight.position.set(-5, -2, -4);
 	scene.add(dirLight);
 
-	// const directionalLight = new DirectionalLight(0xffffff, 12);
-	// directionalLight.position.set(1, 1, 0.5).normalize();
-	// directionalLight.castShadow = true;
-	// scene.add(directionalLight);
+	const fillLight = new DirectionalLight(0xffffff, 2);
+	fillLight.position.set(2, 4, 3);
+	scene.add(fillLight);
+
+	// const gui = new GUI();
+	// gui.addColor(dirLight, "color");
+	// gui.add(dirLight.position, "x", -10, 10).name("DirLight X");
+	// gui.add(dirLight.position, "y", -10, 10).name("DirLight Y");
+	// gui.add(dirLight.position, "z", -10, 10).name("DirLight Z");
+	// gui.add(dirLight, "intensity");
+
+	// gui.addColor(fillLight, "color");
+	// gui.add(fillLight.position, "x", -10, 10).name("DirLight X");
+	// gui.add(fillLight.position, "y", -10, 10).name("DirLight Y");
+	// gui.add(fillLight.position, "z", -10, 10).name("DirLight Z");
+	// gui.add(fillLight, "intensity");
 };

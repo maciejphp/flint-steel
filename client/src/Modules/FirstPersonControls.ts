@@ -1,7 +1,7 @@
 import { Workspace } from "../Controllers/Workspace";
 import { PointerLockControls } from "three/addons/controls/PointerLockControls.js";
 import { RunService } from "../Controllers/RunService";
-import * as THREE from "three";
+import { Vector3, Raycaster } from "three";
 
 export default (): void => {
 	const controls = new PointerLockControls(Workspace.Camera, document.body);
@@ -86,9 +86,9 @@ export default (): void => {
 	document.addEventListener("keydown", onKeyDown);
 	document.addEventListener("keyup", onKeyUp);
 
-	const raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0), 0, 10);
-	const velocity = new THREE.Vector3();
-	const direction = new THREE.Vector3();
+	const raycaster = new Raycaster(new Vector3(), new Vector3(0, -1, 0), 0, 10);
+	const velocity = new Vector3();
+	const direction = new Vector3();
 
 	RunService.RenderStepped.Connect((delta) => {
 		if (controls.isLocked === true) {

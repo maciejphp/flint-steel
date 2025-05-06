@@ -2,7 +2,7 @@ import { World } from "../Modules/Terrain/World";
 import { Vector3 } from "three";
 import { RunService } from "./RunService";
 import { Settings } from "../Modules/Settings";
-import { getChunkId, getChunkPosition, positionToId } from "../Modules/Functions";
+import { getChunkId, getChunkPosition } from "../Modules/Functions";
 import { Workspace } from "./Workspace";
 
 class Class {

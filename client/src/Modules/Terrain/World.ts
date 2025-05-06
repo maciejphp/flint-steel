@@ -6,7 +6,7 @@ import { Settings } from "../Settings";
 import { RunService } from "../../Controllers/RunService";
 import { ServerController } from "../../Controllers/ServerController";
 
-const { blockSize, chunkBlockWidth } = Settings;
+const { BlockSize, ChunkBlockWidth } = Settings;
 
 export class World {
 	LoadedChunks = new Map<string, Chunk>();
@@ -37,14 +37,9 @@ export class World {
 			});
 		});
 
-		// Handle block breaking
-		ServerController.Socket.on("breakBlock", (data) => {
-			this.DestroyBlock(new Vector3(data.BlockPosition.x, data.BlockPosition.y, data.BlockPosition.z));
-		});
-
-		// Handle block placing
-		ServerController.Socket.on("placeBlock", (data) => {
-			this.PlaceBlock(new Vector3(data.BlockPosition.x, data.BlockPosition.y, data.BlockPosition.z));
+		// Handle block breaking & breaaking
+		ServerController.Socket.on("updateBlock", (data) => {
+			this.LoadedChunks.get(data.ChunkId)?.UpdateBlockFromPositionId(data.PositionId, data.BlockId);
 		});
 	}
 
@@ -90,7 +85,7 @@ export class World {
 	}
 
 	DestroyBlock(blockPosition: Vector3): void {
-		let chunkPosition = blockPosition.clone().divideScalar(chunkBlockWidth * blockSize);
+		let chunkPosition = blockPosition.clone().divideScalar(ChunkBlockWidth * BlockSize);
 		chunkPosition = new Vector3(Math.floor(chunkPosition.x), 0, Math.floor(chunkPosition.z));
 
 		const chunk = this.LoadedChunks.get(getChunkId(chunkPosition.x, chunkPosition.z));
@@ -98,7 +93,7 @@ export class World {
 	}
 
 	PlaceBlock(blockPosition: Vector3): void {
-		let chunkPosition = blockPosition.clone().divideScalar(chunkBlockWidth * blockSize);
+		let chunkPosition = blockPosition.clone().divideScalar(ChunkBlockWidth * BlockSize);
 		chunkPosition = new Vector3(Math.floor(chunkPosition.x), 0, Math.floor(chunkPosition.z));
 
 		// const chunk = this.LoadedChunks[positionToId(chunkPosition)];

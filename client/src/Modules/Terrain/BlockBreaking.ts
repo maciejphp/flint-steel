@@ -3,9 +3,9 @@ import { Workspace } from "../../Controllers/Workspace";
 import { Settings } from "../Settings";
 import { WorldController } from "../../Controllers/WorldController";
 import { ServerController } from "../../Controllers/ServerController";
-import { getChunkBlockPosition, getChunkId, getChunkPosition } from "../Functions";
+import { getChunkBlockPosition, getChunkId, getChunkPosition, positionToId } from "../Functions";
 
-const { blockSize } = Settings;
+const { BlockSize } = Settings;
 
 const raycaster = new Raycaster();
 
@@ -20,22 +20,25 @@ window.addEventListener("mousedown", (e) => {
 					if (!ray.normal) return;
 					let blockPosition = ray.point
 						.add(ray.normal.multiply(new Vector3(-1, -1, -1)))
-						.divideScalar(blockSize);
+						.divideScalar(BlockSize);
 
 					blockPosition = new Vector3(
 						Math.round(blockPosition.x),
 						Math.round(blockPosition.y),
 						Math.round(blockPosition.z),
-					).multiplyScalar(blockSize);
+					).multiplyScalar(BlockSize);
 
 					// WorldController.World.DestroyBlock(blockPosition);
 					const chunkPosition = getChunkPosition(blockPosition.clone());
 					const chunk = WorldController.World.LoadedChunks.get(getChunkId(chunkPosition.x, chunkPosition.z));
 					if (chunk) {
 						// chunk?.DestroyBlock(blockPosition);
-						ServerController.Socket.emit("breakBlock", {
-							ChunkId: getChunkId(chunkPosition.x, chunkPosition.z),
-							BlockPosition: { x: blockPosition.x, y: blockPosition.y, z: blockPosition.z },
+						ServerController.Socket.emit("updateBlock", {
+							ChunkPosition: { x: chunkPosition.x, z: chunkPosition.z },
+							PositionId: positionToId(
+								getChunkBlockPosition(blockPosition.clone(), chunkPosition.clone()),
+							),
+							BlockId: 0,
 						});
 					}
 				}
@@ -48,23 +51,28 @@ window.addEventListener("mousedown", (e) => {
 
 				if (ray && ray.distance < 200) {
 					if (!ray.normal) return;
-					let blockPosition = ray.point.add(ray.normal).divideScalar(blockSize);
+					let blockPosition = ray.point.add(ray.normal).divideScalar(BlockSize);
 
 					blockPosition = new Vector3(
 						Math.round(blockPosition.x),
 						Math.round(blockPosition.y),
 						Math.round(blockPosition.z),
-					).multiplyScalar(blockSize);
+					).multiplyScalar(BlockSize);
 
+					// WorldController.World.DestroyBlock(blockPosition);
 					const chunkPosition = getChunkPosition(blockPosition.clone());
 					const chunk = WorldController.World.LoadedChunks.get(getChunkId(chunkPosition.x, chunkPosition.z));
 					if (chunk) {
-						console.log("Placing block", chunk.blocks);
-						// WorldController.World.PlaceBlock(blockPosition);
-						ServerController.Socket.emit("placeBlock", {
-							ChunkId: getChunkId(chunkPosition.x, chunkPosition.z),
-							BlockPosition: { x: blockPosition.x, y: blockPosition.y, z: blockPosition.z },
+						// chunk?.DestroyBlock(blockPosition);
+						ServerController.Socket.emit("updateBlock", {
+							ChunkPosition: { x: chunkPosition.x, z: chunkPosition.z },
+							PositionId: positionToId(
+								getChunkBlockPosition(blockPosition.clone(), chunkPosition.clone()),
+							),
+							BlockId: 4,
 						});
+
+						console.log("place");
 					}
 				}
 			}
