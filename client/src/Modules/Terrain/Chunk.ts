@@ -1,11 +1,4 @@
-import {
-	getChunkBlockPosition,
-	getWorldBlockPosition,
-	idToPosition,
-	positionToId,
-	setPlaneUv,
-	xyzToId,
-} from "../Functions";
+import { getWorldBlockPosition, idToPosition, setPlaneUv, xyzToId } from "../Functions";
 import { Settings } from "../Settings";
 import {
 	Vector3,
