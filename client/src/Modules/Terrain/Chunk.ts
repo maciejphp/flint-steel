@@ -1,4 +1,4 @@
-import { getWorldBlockPosition, idToPosition, setPlaneUv, xyzToId } from "../Functions";
+import { getWorldBlockPosition, idToPosition, xyzToId } from "../Functions";
 import { Settings } from "../Settings";
 import {
 	Vector3,
@@ -10,6 +10,8 @@ import {
 	PlaneGeometry,
 	BufferGeometry,
 	MeshPhongMaterial,
+	BufferAttribute,
+	Texture,
 } from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { Workspace } from "../../Controllers/Workspace";
@@ -17,6 +19,26 @@ import { Workspace } from "../../Controllers/Workspace";
 const { ChunkBlockWidth, ChunkBlockHeight, BlockSize } = Settings;
 const halfBlockSize = BlockSize / 2;
 const halfPi = Math.PI / 2;
+
+let texture: Texture;
+let textureRatio: number;
+
+const getTexture = async () => {
+	const image =
+		Workspace.BlockFlipbookTexture.Value ??
+		(await new Promise<HTMLImageElement>((resolve) => {
+			Workspace.BlockFlipbookTexture.Changed((image) => {
+				if (image) resolve(image);
+			});
+		}));
+
+	texture = new TextureLoader().load(image.src);
+	texture.colorSpace = SRGBColorSpace;
+	texture.magFilter = NearestFilter;
+
+	textureRatio = 1 / (image.width / image.height);
+};
+getTexture();
 
 const planePrehabs = {
 	px: new PlaneGeometry(BlockSize, BlockSize).rotateY(halfPi).translate(halfBlockSize, 0, 0),
@@ -159,18 +181,13 @@ export class Chunk {
 	//
 
 	Generate(): void {
+		console.log("creating chunk");
 		if (!this.fetched) {
 			console.warn("Chunk not fetched yet");
 			return;
 		}
 
 		if (!this.mesh) {
-			// const texture = new TextureLoader().load("../../public/texture.png");
-			const texture = new TextureLoader().load(
-				"https://raw.githubusercontent.com/maciejphp/flint-steel/refs/heads/main/client/public/texture.png",
-			);
-			texture.colorSpace = SRGBColorSpace;
-			texture.magFilter = NearestFilter;
 			this.mesh = new Mesh(this.GenerateGeometry(), new MeshPhongMaterial({ map: texture }));
 			Workspace.Scene.add(this.mesh);
 		} else {
@@ -214,4 +231,23 @@ export class Chunk {
 
 declare global {
 	type ChunkType = InstanceType<typeof Chunk>;
+}
+
+function setPlaneUv(plane: PlaneGeometry, textureIndex: number): void {
+	const epsilon = 0;
+	const start = textureRatio * (textureIndex - 1);
+	const end = start + textureRatio;
+
+	const uv = new Float32Array([
+		start + epsilon,
+		1 - epsilon,
+		end - epsilon,
+		1 - epsilon,
+		start + epsilon,
+		epsilon,
+		end - epsilon,
+		epsilon,
+	]);
+
+	plane.setAttribute("uv", new BufferAttribute(uv, 2));
 }

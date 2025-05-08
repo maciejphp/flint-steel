@@ -14,13 +14,6 @@ class Class {
 	}
 
 	Start() {
-		// const worldSize = 6;
-		// for (let x = 0; x < worldSize; x++) {
-		// 	for (let z = 0; z < worldSize; z++) {
-		// 		this.World.GenerateChunk(new Vector3(x, 0, z));
-		// 	}
-		// }
-
 		// Gather chunks to generate
 		RunService.RenderStepped.Connect(() => {
 			const playerChunkPosition = getChunkPosition(Workspace.Camera.position.clone());
@@ -45,6 +38,7 @@ class Class {
 		return Class.instance;
 	}
 }
+export const WorldController = Class.get();
 
 function fetchNearestChunks(center: Vector3): void {
 	const minX = center.x - Settings.renderDistance;
@@ -57,11 +51,7 @@ function fetchNearestChunks(center: Vector3): void {
 			const distance = Math.sqrt((center.x - x) ** 2 + (center.z - z) ** 2);
 			if (distance > Settings.renderDistance) continue;
 
-			// positions.push(new Vector3(x, center.y, z));
 			const chunk = WorldController.World.LoadedChunks.get(getChunkId(x, z));
-
-			// console.log("chunk", chunk);
-			// if (chunk === undefined || (chunk.fetched && !chunk.generated)) return origin;
 
 			if (chunk === undefined || (chunk.fetched && !chunk.generated)) {
 				WorldController.World.GenerateChunk(new Vector3(x, 0, z));
@@ -69,5 +59,3 @@ function fetchNearestChunks(center: Vector3): void {
 		}
 	}
 }
-
-export const WorldController = Class.get();

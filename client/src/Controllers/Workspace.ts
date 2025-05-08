@@ -1,13 +1,22 @@
 import { Color, PerspectiveCamera, WebGLRenderer, Fog, Scene } from "three";
+import { Value } from "../Utils/Value";
 
 class Class {
 	private static instance: Class;
-
+	BlockFlipbookTexture = new Value<HTMLImageElement | undefined>();
 	Camera: PerspectiveCamera;
 	Scene: Scene;
 	Renderer: WebGLRenderer;
 
 	private constructor() {
+		const image = new Image();
+		// image.src = "../../public/texture.png";
+		image.src = "https://raw.githubusercontent.com/maciejphp/flint-steel/refs/heads/main/client/public/texture.png";
+
+		image.onload = () => {
+			this.BlockFlipbookTexture.Set(image);
+		};
+
 		this.Camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 5000);
 		this.Camera.position.y = 10;
 

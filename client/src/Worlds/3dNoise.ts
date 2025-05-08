@@ -4,7 +4,6 @@ import { WorldController } from "../Controllers/WorldController";
 
 export default (): void => {
 	const scene = Workspace.Scene;
-
 	WorldController.Start();
 
 	const dirLight = new DirectionalLight(0xffffff, 1.5);
