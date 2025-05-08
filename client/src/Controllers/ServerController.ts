@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { io, Socket } from "socket.io-client";
 import { Settings } from "../Modules/Settings";
 import { Vector3 } from "three";
@@ -17,10 +18,12 @@ class Class {
 		this.Socket.on("connect", () => {
 			console.log("Connected to server");
 			this.Connected = true;
+			document.getElementById("loading-screen-message")!.innerHTML += "<p>Connected to Server</p>";
 		});
 	}
 
 	async GetChunkData(chunkPositions: Vector3[]): Promise<[Record<string, number[]>, boolean]> {
+		document.getElementById("loading-screen-message")!.innerHTML += "<p>Loading chunks...</p>";
 		const response = await api.post("/world/getChunks", {
 			ChunkPositions: chunkPositions.map((chunk) => {
 				return {
@@ -31,6 +34,7 @@ class Class {
 		});
 		const success = handleResponse(response);
 		response.data.ChunkData as number[][];
+		document.getElementById("loading-screen")!.style.display = "none";
 		return [response.data.ChunkData, success];
 	}
 

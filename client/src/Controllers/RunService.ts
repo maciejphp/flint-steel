@@ -3,13 +3,13 @@ import { Signal } from "../Utils/Signal";
 
 class Class {
 	private static instance: Class;
-	private PrevTime = performance.now();
+	private PrevTime = Date.now();
 
 	RenderStepped = new Signal<number>();
 
 	private constructor() {
 		Workspace.Renderer.setAnimationLoop(() => {
-			const time = performance.now();
+			const time = Date.now();
 			this.RenderStepped.Fire((time - this.PrevTime) / 1000);
 			this.PrevTime = time;
 

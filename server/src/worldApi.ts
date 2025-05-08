@@ -1,20 +1,17 @@
 import express from "express";
 import { WorldService } from "./Services/WorldService.js";
-import { getChunkId } from "./Functions.js";
 
 const router = express.Router();
 
 router.post("/getChunks", async (req, res) => {
 	const ChunkPositions = req.body.ChunkPositions as Vector2[];
-	const ChunkData: Record<string, number[]> = {};
+	const fetchTime = Date.now();
 
-	await Promise.all(
-		ChunkPositions.map(async (chunkPosition) => {
-			ChunkData[getChunkId(chunkPosition.x, chunkPosition.z)] = await WorldService.GetChunk(chunkPosition);
-		}),
-	);
+	const chunkData = await WorldService.GetChunks(ChunkPositions);
 
-	res.send({ ChunkData });
+	console.log(`Chunk fetch time: ${Date.now() - fetchTime}`);
+
+	res.send({ ChunkData: chunkData });
 });
 
 export default router;

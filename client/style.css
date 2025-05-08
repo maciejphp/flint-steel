@@ -102,8 +102,7 @@ button:focus-visible {
   position: absolute;
   width: 100%;
   height: 100%;
-  /* background-color: rgba(0,0,0,0.5); */
-  background-color: rgba(0,0,0,0);
+  background-color: rgba(0,0,0,0.5);
 }
 
 #instructions {
@@ -129,4 +128,58 @@ button:focus-visible {
   left: 50%;
   transform: translate(-50%, -50%);
   border-radius: 100%
+}
+
+#Inventory {
+  display: flex;
+  gap: 10px;
+  bottom: 50px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+#Inventory > div{
+  background-color: red;
+  height: 80px;
+  width: 80px;
+  text-align: center;
+  border: #1a1a1a 1px solid;
+}
+
+
+#loading-screen {
+  position: absolute;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  color: #fff;
+  background-color: black;
+  width: 100vw;
+  height: 100vh;
+}
+
+#loading-screen > div {
+  position: relative;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.spinner {
+  width: 80px;
+  height: 80px;
+  border: 5px solid rgba(255, 255, 255, 0.3);
+  border-top: 5px solid #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 10px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

@@ -1,10 +1,10 @@
 import { Workspace } from "../Controllers/Workspace";
 import { PointerLockControls } from "three/addons/controls/PointerLockControls.js";
 import { RunService } from "../Controllers/RunService";
-import { Vector3 } from "three";
+import { Euler, Quaternion, Vector3 } from "three";
 import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 
-export default (): void => {
+export default (): PointerLockControls => {
 	const controls = new PointerLockControls(Workspace.Camera, document.body);
 	let moveForward = false;
 	let moveBackward = false;
@@ -32,7 +32,7 @@ export default (): void => {
 
 	Workspace.Scene.add(controls.object);
 
-	const onKeyDown = function (event: KeyboardEvent) {
+	document.addEventListener("keydown", (event: KeyboardEvent) => {
 		switch (event.code) {
 			case "ArrowUp":
 			case "KeyW":
@@ -62,9 +62,8 @@ export default (): void => {
 				moveDown = true;
 				break;
 		}
-	};
-
-	const onKeyUp = function (event: KeyboardEvent) {
+	});
+	document.addEventListener("keyup", (event: KeyboardEvent) => {
 		switch (event.code) {
 			case "ArrowUp":
 			case "KeyW":
@@ -94,37 +93,44 @@ export default (): void => {
 				moveDown = false;
 				break;
 		}
-	};
-
-	document.addEventListener("keydown", onKeyDown);
-	document.addEventListener("keyup", onKeyUp);
+	});
 
 	const velocity = new Vector3();
 	const direction = new Vector3();
-	const movement = new Vector3();
 
 	const Settings = {
-		speed: 1500,
+		speed: 500,
+		friction: 8,
 	};
 
 	const gui = new GUI();
-	gui.add(Settings, "speed", 10, 4000, 1);
+	gui.add(Settings, "speed", 1, 2000, 1);
 
 	RunService.RenderStepped.Connect((delta) => {
 		if (controls.isLocked === true) {
-			velocity.multiplyScalar(1 - 10 * delta); // friction value
+			velocity.multiplyScalar(1 - Settings.friction * delta); // friction value
 
+			// Step 1: Create direction vector (horizontal only — Y will be added separately if needed)
 			direction
-				.set(
-					Number(moveRight) - Number(moveLeft),
-					Number(moveUp) - Number(moveDown),
-					Number(moveBackward) - Number(moveForward),
-				)
+				.set(Number(moveRight) - Number(moveLeft), 0, Number(moveBackward) - Number(moveForward))
 				.normalize();
 
-			movement.copy(direction).applyQuaternion(controls.object.quaternion);
+			// Step 2: Get the camera's yaw (horizontal rotation only)
+			const euler = new Euler(0, 0, 0, "YXZ");
+			euler.setFromQuaternion(controls.object.quaternion);
+			const yaw = new Quaternion().setFromEuler(new Euler(0, euler.y, 0));
+
+			// Step 3: Apply yaw-only rotation to direction
+			const movement = direction.applyQuaternion(yaw);
+
+			// Step 4: Add Y movement separately
+			if (moveUp) direction.y += 1;
+			if (moveDown) direction.y -= 1;
+
 			velocity.add(movement.multiplyScalar(Settings.speed * delta));
 			controls.object.position.add(velocity.clone().multiplyScalar(delta));
 		}
 	});
+
+	return controls;
 };

@@ -12,14 +12,8 @@ RunService.RenderStepped.Connect(() => {
 });
 
 LocalPlayerController.Fly = true;
-LocalPlayerController.Load();
 
-// import loadFlyingBoxes from "./Worlds/FlyingBoxes";
-// import loadValley from "./Worlds/Valley";
 import load3dNoise from "./Worlds/3dNoise";
-// import load3dNoise from "./Worlds/Shadow";
-
-// import loadMinecraft from "./Worlds/Minecraft";
 
 load3dNoise();
 // loadValley()

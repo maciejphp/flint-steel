@@ -29,6 +29,8 @@ const io = new SocketIO(server, {
 	},
 });
 
+fetch("https://ipapi.co/json").then((r) => console.log(r.json()));
+
 app.use(
 	cors({
 		origin: function (origin, callback) {

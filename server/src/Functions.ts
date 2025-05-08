@@ -46,3 +46,32 @@ export function getWorldBlockPosition(blockPosition: Vector3, chunkPosition: Vec
 	};
 }
 export const getChunkId = (x: number, z: number): string => `${x},${z}`;
+
+export const ChunkIdToPosition = (chunkId: string): Vector2 => {
+	const [x, z] = chunkId.split(",").map(Number);
+	return { x, z };
+};
+
+export const logDebugTime = (message?: string): void => {
+	const now = new Date();
+
+	const options: Intl.DateTimeFormatOptions = {
+		timeZone: "Europe/Berlin",
+		minute: "2-digit",
+		second: "2-digit",
+		hour: "2-digit",
+		hour12: false,
+	};
+
+	const formatter = new Intl.DateTimeFormat("en-GB", options);
+	const parts = formatter.formatToParts(now);
+
+	// Extract parts
+	const minute = parts.find((p) => p.type === "minute")?.value || "00";
+	const second = parts.find((p) => p.type === "second")?.value || "00";
+	const millisecond = String(now.getMilliseconds()).padStart(3, "0");
+
+	// Final formatted string
+	const formatted = `${message ?? ""} ${minute}:${second}:${millisecond}`;
+	console.log(formatted);
+};

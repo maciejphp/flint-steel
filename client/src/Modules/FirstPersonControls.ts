@@ -3,7 +3,7 @@ import { PointerLockControls } from "three/addons/controls/PointerLockControls.j
 import { RunService } from "../Controllers/RunService";
 import { Vector3, Raycaster } from "three";
 
-export default (): void => {
+export default (): PointerLockControls => {
 	const controls = new PointerLockControls(Workspace.Camera, document.body);
 	let moveForward = false;
 	let moveBackward = false;
@@ -129,4 +129,6 @@ export default (): void => {
 			}
 		}
 	});
+
+	return controls;
 };

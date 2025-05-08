@@ -2,16 +2,14 @@ import { getChunkId } from "../Functions";
 import { Chunk } from "./Chunk";
 import { Vector3 } from "three";
 import "./BlockBreaking";
-import { Settings } from "../Settings";
 import { RunService } from "../../Controllers/RunService";
 import { ServerController } from "../../Controllers/ServerController";
-
-const { BlockSize, ChunkBlockWidth } = Settings;
 
 export class World {
 	LoadedChunks = new Map<string, Chunk>();
 	ChunkFetchQueue: Chunk[] = [];
 	ChunkGenerateQueue: Chunk[] = [];
+	ChunksThatAreGettingFetched = new Set<Chunk>();
 
 	constructor() {
 		// Fetch chunks
@@ -22,13 +20,18 @@ export class World {
 			// Fetch chunks
 			if (this.ChunkFetchQueue.length === 0) return;
 
+			this.ChunkFetchQueue.forEach((chunk) => this.ChunksThatAreGettingFetched.add(chunk));
 			const chunkPositions = this.ChunkFetchQueue.map((chunk) => chunk.chunkPosition);
 			this.ChunkFetchQueue = [];
+
+			const fetchTime = Date.now();
 			const [chunkData, success] = await ServerController.GetChunkData(chunkPositions);
 			if (!success) {
 				console.warn("Failed to fetch chunk data");
 				return;
 			}
+			console.log(`Chunk fetch time: ${Date.now() - fetchTime}`);
+
 			Object.entries(chunkData).forEach(([key, value]) => {
 				const chunk = this.LoadedChunks.get(key);
 				if (!chunk) return;
@@ -82,22 +85,5 @@ export class World {
 	DestroyChunk(chunk: Chunk): void {
 		this.LoadedChunks.delete(getChunkId(chunk.chunkPosition.x, chunk.chunkPosition.z));
 		chunk.Destroy();
-	}
-
-	DestroyBlock(blockPosition: Vector3): void {
-		let chunkPosition = blockPosition.clone().divideScalar(ChunkBlockWidth * BlockSize);
-		chunkPosition = new Vector3(Math.floor(chunkPosition.x), 0, Math.floor(chunkPosition.z));
-
-		const chunk = this.LoadedChunks.get(getChunkId(chunkPosition.x, chunkPosition.z));
-		chunk?.DestroyBlock(blockPosition);
-	}
-
-	PlaceBlock(blockPosition: Vector3): void {
-		let chunkPosition = blockPosition.clone().divideScalar(ChunkBlockWidth * BlockSize);
-		chunkPosition = new Vector3(Math.floor(chunkPosition.x), 0, Math.floor(chunkPosition.z));
-
-		// const chunk = this.LoadedChunks[positionToId(chunkPosition)];
-		const chunk = this.LoadedChunks.get(getChunkId(chunkPosition.x, chunkPosition.z));
-		chunk?.PlaceBlock(blockPosition);
 	}
 }

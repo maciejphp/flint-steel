@@ -1,5 +1,5 @@
 import { createNoise3D } from "simplex-noise";
-import { getChunkId, getWorldBlockPosition, query } from "../Functions.js";
+import { ChunkIdToPosition, getChunkId, getWorldBlockPosition, query } from "../Functions.js";
 import { Settings } from "../Settings.js";
 import Alea from "alea";
 
@@ -13,7 +13,7 @@ class Class {
 	ModifiedChunks: Record<string, Chunk> = {};
 
 	private constructor() {
-		// Save every 5 seconds
+		// Save every 30 seconds
 		setInterval(async () => {
 			let insertQueries = "";
 			Object.entries(this.ModifiedChunks).forEach(([chunkId, chunk]) => {
@@ -29,8 +29,58 @@ class Class {
 
 			this.LoadedChunks = {};
 			this.ModifiedChunks = {};
-		}, 3000);
+		}, 30000);
 	}
+
+	// --
+
+	async GetChunks(chunkPositions: Vector2[]): Promise<Record<string, Chunk>> {
+		const chunks: Record<string, Chunk> = {};
+
+		const chunkIdsToRequest: string[] = [];
+
+		// Get all fetched chunks
+		chunkPositions.forEach((chunkPosition) => {
+			const chunkId = getChunkId(chunkPosition.x, chunkPosition.z);
+
+			const cachedChunk = this.LoadedChunks[chunkId];
+			if (cachedChunk) {
+				chunks[chunkId] = cachedChunk;
+			} else {
+				chunkIdsToRequest.push(chunkId);
+			}
+		});
+
+		if (chunkIdsToRequest.length < 1) return chunks;
+
+		// Get chunks from database
+		const [result, success] = await query<{ ChunkId: string; Data: string }>(
+			chunkIdsToRequest.map((chunkId) => `SELECT * FROM chunks WHERE ChunkId = '${chunkId}';`).join(" "),
+			[],
+		);
+		if (success && result) {
+			const chunksData = result[0] as unknown as [{ ChunkId: string; Data: string }?][];
+			chunksData.forEach((data) => {
+				const chunk = data[0];
+				if (chunk === undefined) return;
+
+				const chunkData = JSON.parse(chunk.Data);
+				this.LoadedChunks[chunk.ChunkId] = chunkData;
+				chunks[chunk.ChunkId] = chunkData;
+
+				chunkIdsToRequest.splice(chunkIdsToRequest.indexOf(chunk.ChunkId), 1);
+			});
+		}
+
+		// Generate the remaining chunks
+		chunkIdsToRequest.forEach((chunkId) => {
+			chunks[chunkId] = this.generateChunk(chunkId);
+		});
+
+		return chunks;
+	}
+
+	// --
 
 	async GetChunk(chunkPosition: Vector2): Promise<Chunk> {
 		const chunkId = getChunkId(chunkPosition.x, chunkPosition.z);
@@ -49,7 +99,6 @@ class Class {
 		if (success && result) {
 			const chunk = result[0][0];
 			if (chunk) {
-				// console.log(chunk);
 				const chunkData = JSON.parse(chunk.Data);
 				this.LoadedChunks[chunkId] = chunkData;
 				return chunkData;
@@ -57,7 +106,12 @@ class Class {
 		}
 
 		// Generate new chunk
+		return this.generateChunk(chunkId);
+	}
+
+	private generateChunk(chunkId: string): Chunk {
 		let newChunk: Chunk = [];
+		const chunkPosition = ChunkIdToPosition(chunkId);
 
 		// Generate block  or air
 		for (let x = 0; x < ChunkBlockWidth; x++) {

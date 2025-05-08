@@ -72,33 +72,6 @@ export class Chunk {
 		else if (chunkBlockPosition.z === ChunkBlockWidth - 1 && this.chunkFront?.generated) this.chunkFront.Generate();
 	}
 
-	DestroyBlock(blockPosition: Vector3): void {
-		if (!this.mesh) return;
-
-		const chunkBlockPosition = getChunkBlockPosition(blockPosition.clone(), this.chunkPosition.clone());
-		this.blocks[positionToId(chunkBlockPosition)] = 0;
-
-		this.Generate();
-
-		if (chunkBlockPosition.x === 0 && this.chunkLeft?.generated) this.chunkLeft.Generate();
-		else if (chunkBlockPosition.x === ChunkBlockWidth - 1 && this.chunkRight?.generated) this.chunkRight.Generate();
-		if (chunkBlockPosition.z === 0 && this.chunkBack?.generated) this.chunkBack.Generate();
-		else if (chunkBlockPosition.z === ChunkBlockWidth - 1 && this.chunkFront?.generated) this.chunkFront.Generate();
-	}
-
-	//
-	PlaceBlock(blockPosition: Vector3): void {
-		if (!this.generated) return;
-
-		const chunkBlockPosition = getChunkBlockPosition(blockPosition.clone(), this.chunkPosition.clone());
-
-		if (chunkBlockPosition.y < 0 || chunkBlockPosition.y >= ChunkBlockHeight) return;
-
-		this.blocks[xyzToId(chunkBlockPosition.x, chunkBlockPosition.y, chunkBlockPosition.z)] = 3;
-
-		this.Generate();
-	}
-
 	//
 
 	private GenerateGeometry(): BufferGeometry | undefined {

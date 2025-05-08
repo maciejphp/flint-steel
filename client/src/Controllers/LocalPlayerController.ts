@@ -1,17 +1,20 @@
+import { PointerLockControls } from "three/examples/jsm/Addons.js";
 import GravityMode from "../Modules/FirstPersonControls";
 import FlyMode from "../Modules/FlyControls";
 
 class Class {
 	private static instance: Class;
+	Controls: PointerLockControls;
 
-	Fly = false;
+	Fly = true;
 
-	Load() {
+	constructor() {
 		if (this.Fly) {
-			FlyMode();
+			this.Controls = FlyMode();
 		} else {
-			GravityMode();
+			this.Controls = GravityMode();
 		}
+		this.Controls.object.position.y = 300;
 	}
 
 	public static get(): Class {
