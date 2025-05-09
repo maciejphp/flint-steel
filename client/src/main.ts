@@ -1,21 +1,38 @@
 import Stats from "three/addons/libs/stats.module.js";
-import { LocalPlayerController } from "./Controllers/LocalPlayerController";
+import load3dNoise from "./Worlds/3dNoise";
+import { ControllerService } from "./Modules/ControllerService";
 import { RunService } from "./Controllers/RunService";
+
+// Auto-import all controllers during build
+// loadControllers.ts
+const modules = import.meta.glob("./controllers/*.ts", { eager: true });
+
+// Wait for all files to register
+await Promise.all(Object.values(modules));
+
+// After all controllers are registered, call Init on each
+for (const name of ControllerService.GetControllerNames()) {
+	const controller = ControllerService.GetController(name);
+
+	// Only call Init if it exists
+	if (typeof controller.Init === "function") {
+		await controller.Init();
+	}
+}
+
+const LocalPlayerController = ControllerService.GetController("LocalPlayerController");
 
 const stats = new Stats();
 
 const container = document.getElementById("app") as HTMLDivElement;
 container.appendChild(stats.dom);
 
-RunService.RenderStepped.Connect(() => {
+RunService.Heartbeat.Connect(() => {
 	stats.update();
 });
 
 LocalPlayerController.Fly = true;
 
-import load3dNoise from "./Worlds/3dNoise";
-
 load3dNoise();
-// loadValley()
 
-//start 287
+// start 287

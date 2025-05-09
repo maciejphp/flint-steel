@@ -15,7 +15,7 @@ class Class {
 
 	Start() {
 		// Gather chunks to generate
-		RunService.RenderStepped.Connect(() => {
+		RunService.Heartbeat.Connect(() => {
 			const playerChunkPosition = getChunkPosition(Workspace.Camera.position.clone());
 			// Generate new chunk
 			fetchNearestChunks(playerChunkPosition);

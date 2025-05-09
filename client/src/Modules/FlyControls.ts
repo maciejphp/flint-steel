@@ -1,10 +1,12 @@
 import { Workspace } from "../Controllers/Workspace";
 import { PointerLockControls } from "three/addons/controls/PointerLockControls.js";
 import { RunService } from "../Controllers/RunService";
-import { Euler, Quaternion, Vector3 } from "three";
-import { GUI } from "three/addons/libs/lil-gui.module.min.js";
+import { Euler, Quaternion, Raycaster, Vector3 } from "three";
+import { ControllerService } from "./ControllerService";
 
 export default (): PointerLockControls => {
+	const LocalPlayerController = ControllerService.GetController("LocalPlayerController");
+
 	const controls = new PointerLockControls(Workspace.Camera, document.body);
 	let moveForward = false;
 	let moveBackward = false;
@@ -96,24 +98,26 @@ export default (): PointerLockControls => {
 	});
 
 	const velocity = new Vector3();
-	const direction = new Vector3();
 
 	const Settings = {
 		speed: 500,
 		friction: 8,
 	};
 
-	const gui = new GUI();
-	gui.add(Settings, "speed", 1, 2000, 1);
+	LocalPlayerController.Gui.add(Settings, "speed", 1, 2000, 1);
 
-	RunService.RenderStepped.Connect((delta) => {
+	let previousPosition: Vector3;
+
+	RunService.Heartbeat.Connect((delta) => {
 		if (controls.isLocked === true) {
 			velocity.multiplyScalar(1 - Settings.friction * delta); // friction value
 
 			// Step 1: Create direction vector (horizontal only — Y will be added separately if needed)
-			direction
-				.set(Number(moveRight) - Number(moveLeft), 0, Number(moveBackward) - Number(moveForward))
-				.normalize();
+			const direction = new Vector3(
+				Number(moveRight) - Number(moveLeft),
+				0,
+				Number(moveBackward) - Number(moveForward),
+			).normalize();
 
 			// Step 2: Get the camera's yaw (horizontal rotation only)
 			const euler = new Euler(0, 0, 0, "YXZ");
@@ -128,7 +132,34 @@ export default (): PointerLockControls => {
 			if (moveDown) direction.y -= 1;
 
 			velocity.add(movement.multiplyScalar(Settings.speed * delta));
-			controls.object.position.add(velocity.clone().multiplyScalar(delta));
+
+			const newPosition = controls.object.position.clone().add(velocity.clone().multiplyScalar(delta));
+
+			// Handle collision
+			if (previousPosition) {
+				// const direction = previousPosition.clone().sub(controls.object.position);
+				// const direction = controls.object.position.clone().sub(previousPosition);
+				const direction = new Vector3().subVectors(newPosition, controls.object.position);
+				const raycaster = new Raycaster(
+					controls.object.position,
+					direction.clone().normalize(),
+					0,
+					direction.length() + 1,
+				);
+
+				const ray = raycaster.intersectObjects(Workspace.Scene.children)[0];
+
+				if (ray && ray.normal) {
+					console.log("HIT");
+					// stop player from clipping though the world
+					newPosition.copy(ray.point.add(ray.normal));
+					velocity.set(0, 0, 0);
+				}
+			}
+
+			controls.object.position.copy(newPosition);
+
+			previousPosition = newPosition;
 		}
 	});
 

@@ -13,7 +13,7 @@ export class World {
 
 	constructor() {
 		// Fetch chunks
-		RunService.RenderStepped.Connect(async () => {
+		RunService.Heartbeat.Connect(async () => {
 			// Render 1 chunk at a time
 			this.ChunkGenerateQueue.shift()?.Generate();
 

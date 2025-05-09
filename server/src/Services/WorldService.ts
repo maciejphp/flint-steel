@@ -27,11 +27,10 @@ class Class {
 			Object.entries(this.saveQueue).forEach(([chunkId, chunk]) => {
 				// Create a deep copy of the chunk data to prevent reference issues
 				const chunkCopy = [...chunk];
-				insertQueries += `INSERT INTO chunks (ChunkId, Data) VALUES ('${chunkId}','${JSON.stringify(
-					chunkCopy,
-				)}')
-            ON DUPLICATE KEY UPDATE
-            Data = VALUES(Data);`;
+				insertQueries += `
+					INSERT INTO chunks (ChunkId, Data) VALUES ('${chunkId}','${JSON.stringify(chunkCopy)}')
+					ON DUPLICATE KEY UPDATE Data = VALUES(Data);
+				`;
 			});
 
 			try {
@@ -62,14 +61,17 @@ class Class {
 			saveWorld();
 		}, 60 * 1000);
 
-		process.on("SIGINT", saveWorld);
-		process.on("SIGTERM", saveWorld);
+		// process.on("SIGINT", saveWorld);
+		// process.on("SIGTERM", saveWorld);
 	}
 
 	// --
 
 	async GetChunks(chunkPositions: Vector2[]): Promise<Record<string, Chunk>> {
 		const chunks: Record<string, Chunk> = {};
+		let cachedChunks = 0;
+		let databaseChunks = 0;
+		let generateChunks = 0;
 
 		const chunkIdsToRequest: string[] = [];
 
@@ -80,27 +82,31 @@ class Class {
 			const cachedChunk = this.LoadedChunks[chunkId];
 			if (cachedChunk) {
 				chunks[chunkId] = cachedChunk;
+				cachedChunks++;
 			} else {
 				chunkIdsToRequest.push(chunkId);
 			}
 		});
 
-		if (chunkIdsToRequest.length < 1) return chunks;
+		if (chunkIdsToRequest.length === 0) return chunks;
 
 		// Get chunks from database
+		const chunkIdList = chunkIdsToRequest.map((item) => `'${item}'`).join(", ");
+		console.log("chunkPositions", chunkIdList);
 		const [result, success] = await query<{ ChunkId: string; Data: string }>(
-			chunkIdsToRequest.map((chunkId) => `SELECT * FROM chunks WHERE ChunkId = '${chunkId}';`).join(" "),
+			`SELECT * FROM chunks WHERE ChunkId IN (${chunkIdList});`,
 			[],
 		);
+
 		if (success && result) {
-			const chunksData = result[0] as unknown as [{ ChunkId: string; Data: string }?][];
-			chunksData.forEach((data) => {
-				const chunk = data[0];
+			const chunksData = result[0] as unknown as { ChunkId: string; Data: string }[];
+			chunksData.forEach((chunk) => {
 				if (chunk === undefined) return;
 
 				const chunkData = JSON.parse(chunk.Data);
 				this.LoadedChunks[chunk.ChunkId] = chunkData;
 				chunks[chunk.ChunkId] = chunkData;
+				databaseChunks++;
 
 				chunkIdsToRequest.splice(chunkIdsToRequest.indexOf(chunk.ChunkId), 1);
 			});
@@ -109,7 +115,10 @@ class Class {
 		// Generate the remaining chunks
 		chunkIdsToRequest.forEach((chunkId) => {
 			chunks[chunkId] = this.generateChunk(chunkId);
+			generateChunks++;
 		});
+
+		console.log({ cachedChunks, databaseChunks, generateChunks });
 
 		return chunks;
 	}

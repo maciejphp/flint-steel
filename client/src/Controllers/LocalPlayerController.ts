@@ -2,14 +2,19 @@ import { PointerLockControls } from "three/examples/jsm/Addons.js";
 import GravityMode from "../Modules/FirstPersonControls";
 import FlyMode from "../Modules/FlyControls";
 import { Matrix4 } from "three";
+import { GUI } from "three/addons/libs/lil-gui.module.min.js";
+import { ControllerService } from "../Modules/ControllerService";
+import { RunService } from "./RunService";
 
-class Class {
-	private static instance: Class;
-	Controls: PointerLockControls;
+console.log("locaplcontroller");
+
+class LocalPlayerController {
+	Controls!: PointerLockControls;
+	Gui = new GUI();
 
 	Fly = true;
 
-	constructor() {
+	async Init() {
 		if (this.Fly) {
 			this.Controls = FlyMode();
 		} else {
@@ -25,19 +30,30 @@ class Class {
 
 		const savedPosition = localStorage.getItem("playerMatrix");
 		if (savedPosition) {
-			console.log(savedPosition);
 			this.Controls.object.applyMatrix4(JSON.parse(savedPosition) as Matrix4);
 		} else {
 			this.Controls.object.position.y = 300;
 		}
-	}
 
-	public static get(): Class {
-		if (!Class.instance) {
-			Class.instance = new Class();
-		}
-		return Class.instance;
+		// Display coordinates
+		const coordinates = {
+			position: "",
+		};
+
+		const positionGui = this.Gui.add(coordinates, "position").disable();
+
+		RunService.Heartbeat.Connect(() => {
+			const { x, y, z } = this.Controls.object.position;
+			coordinates.position = `x${Math.round(x)} y${Math.round(y)} z${Math.round(z)}`;
+			positionGui.updateDisplay();
+		});
 	}
 }
 
-export const LocalPlayerController = Class.get();
+ControllerService.Register("LocalPlayerController", LocalPlayerController);
+
+declare global {
+	interface ControllerConstructors {
+		LocalPlayerController: typeof LocalPlayerController;
+	}
+}

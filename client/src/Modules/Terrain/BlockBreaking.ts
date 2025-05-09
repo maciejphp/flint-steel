@@ -5,7 +5,9 @@ import { WorldController } from "../../Controllers/WorldController";
 import { ServerController } from "../../Controllers/ServerController";
 import { getChunkBlockPosition, getChunkId, getChunkPosition, positionToId } from "../Functions";
 import { InventoryController } from "../../Controllers/InventoryController";
-import { LocalPlayerController } from "../../Controllers/LocalPlayerController";
+import { ControllerService } from "../ControllerService";
+
+const LocalPlayerController = ControllerService.GetController("LocalPlayerController");
 
 const { BlockSize } = Settings;
 

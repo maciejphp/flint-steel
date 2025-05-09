@@ -9,9 +9,9 @@ import {
 	Matrix4,
 	PlaneGeometry,
 	BufferGeometry,
-	MeshPhongMaterial,
 	BufferAttribute,
-	Texture,
+	Material,
+	MeshPhongMaterial,
 } from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { Workspace } from "../../Controllers/Workspace";
@@ -20,7 +20,7 @@ const { ChunkBlockWidth, ChunkBlockHeight, BlockSize } = Settings;
 const halfBlockSize = BlockSize / 2;
 const halfPi = Math.PI / 2;
 
-let texture: Texture;
+let material: Material;
 let textureRatio: number;
 
 const getTexture = async () => {
@@ -32,10 +32,11 @@ const getTexture = async () => {
 			});
 		}));
 
-	texture = new TextureLoader().load(image.src);
+	const texture = new TextureLoader().load(image.src);
 	texture.colorSpace = SRGBColorSpace;
 	texture.magFilter = NearestFilter;
 
+	material = new MeshPhongMaterial({ map: texture });
 	textureRatio = 1 / (image.width / image.height);
 };
 getTexture();
@@ -187,7 +188,7 @@ export class Chunk {
 		}
 
 		if (!this.mesh) {
-			this.mesh = new Mesh(this.GenerateGeometry(), new MeshPhongMaterial({ map: texture }));
+			this.mesh = new Mesh(this.GenerateGeometry(), material);
 			Workspace.Scene.add(this.mesh);
 		} else {
 			const geometry = this.GenerateGeometry();
