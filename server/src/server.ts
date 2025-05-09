@@ -4,12 +4,7 @@ import dotenv from "dotenv";
 import http from "http";
 import { Server as SocketIO } from "socket.io";
 
-const allowedOrigins = [
-	"https://m.machat.workers.dev",
-	"http://localhost:5173",
-	"http://localhost:5174",
-	"https://flint-steel-n0nbgyw82-maciejs-projects-129eee01.vercel.app",
-];
+const allowedOrigins = ["http://localhost:5173", "http://localhost:5174", "https://flint-steel.vercel.app"];
 
 dotenv.config();
 const app = express();
@@ -28,8 +23,6 @@ const io = new SocketIO(server, {
 		credentials: true,
 	},
 });
-
-fetch("https://ipapi.co/json").then((r) => console.log(r.json()));
 
 app.use(
 	cors({
@@ -65,11 +58,21 @@ io.on("connection", (socket) => {
 	socket.on("updateBlock", async (data: { ChunkPosition: Vector2; PositionId: number; BlockId: number }) => {
 		const { ChunkPosition, PositionId, BlockId } = data;
 		const chunk = await WorldService.GetChunk(ChunkPosition);
+
 		if (chunk && chunk[PositionId] !== undefined) {
 			const chunkId = getChunkId(ChunkPosition.x, ChunkPosition.z);
-			chunk[data.PositionId] = BlockId;
-			WorldService.ModifiedChunks[chunkId] = chunk;
+
+			// Create a deep copy of the chunk before modification
+			const updatedChunk = [...chunk];
+			updatedChunk[PositionId] = BlockId;
+
+			// Update both LoadedChunks and ModifiedChunks
+			WorldService.LoadedChunks[chunkId] = updatedChunk;
+			WorldService.ModifiedChunks[chunkId] = updatedChunk;
+
 			io.emit("updateBlock", { ChunkId: chunkId, PositionId, BlockId });
+		} else {
+			console.warn("Invalid chunk or position:", ChunkPosition, PositionId);
 		}
 	});
 

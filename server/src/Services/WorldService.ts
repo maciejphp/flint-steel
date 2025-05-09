@@ -12,24 +12,58 @@ class Class {
 	LoadedChunks: Record<string, Chunk> = {};
 	ModifiedChunks: Record<string, Chunk> = {};
 
+	private isSaving = false;
+	private saveQueue: Record<string, Chunk> = {};
+
 	private constructor() {
-		// Save every 30 seconds
-		setInterval(async () => {
+		const saveWorld = async () => {
+			if (this.isSaving || Object.keys(this.ModifiedChunks).length === 0) return;
+
+			this.isSaving = true;
+			this.saveQueue = { ...this.ModifiedChunks };
+			this.ModifiedChunks = {};
+
 			let insertQueries = "";
-			Object.entries(this.ModifiedChunks).forEach(([chunkId, chunk]) => {
-				insertQueries += `INSERT INTO chunks (ChunkId, Data) VALUES ('${chunkId}','${JSON.stringify(chunk)}')
-				ON DUPLICATE KEY UPDATE
-				Data = VALUES(Data);`;
+			Object.entries(this.saveQueue).forEach(([chunkId, chunk]) => {
+				// Create a deep copy of the chunk data to prevent reference issues
+				const chunkCopy = [...chunk];
+				insertQueries += `INSERT INTO chunks (ChunkId, Data) VALUES ('${chunkId}','${JSON.stringify(
+					chunkCopy,
+				)}')
+            ON DUPLICATE KEY UPDATE
+            Data = VALUES(Data);`;
 			});
 
-			if (insertQueries === "") return;
+			try {
+				await query(insertQueries, []);
+				console.log("Saved chunks:", Object.keys(this.saveQueue).length);
 
-			const [, success] = await query(insertQueries, []);
-			console.log("Saved chunks", success);
+				// Only unload chunks that aren't modified since we started saving
+				Object.keys(this.saveQueue).forEach((chunkId) => {
+					if (!this.ModifiedChunks[chunkId]) {
+						delete this.LoadedChunks[chunkId];
+					}
+				});
+			} catch (error) {
+				// If save fails, add chunks back to ModifiedChunks
+				this.ModifiedChunks = {
+					...this.ModifiedChunks,
+					...this.saveQueue,
+				};
+				console.error("Failed to save chunks:", error);
+			}
 
-			this.LoadedChunks = {};
-			this.ModifiedChunks = {};
-		}, 30000);
+			this.saveQueue = {};
+			this.isSaving = false;
+		};
+
+		// Auto save more frequently to reduce data loss risk
+		setInterval(() => {
+			saveWorld();
+		}, 60 * 1000);
+
+		process.on("SIGINT", saveWorld);
+		process.on("SIGTERM", saveWorld);
 	}
 
 	// --

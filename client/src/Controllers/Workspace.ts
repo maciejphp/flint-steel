@@ -1,4 +1,4 @@
-import { Color, PerspectiveCamera, WebGLRenderer, Fog, Scene } from "three";
+import { PerspectiveCamera, WebGLRenderer, Fog, Scene } from "three";
 import { Value } from "../Utils/Value";
 
 class Class {
@@ -21,7 +21,7 @@ class Class {
 		this.Camera.position.y = 10;
 
 		this.Scene = new Scene();
-		this.Scene.background = new Color(0xbfd1e5);
+		// this.Scene.background = new Color(0xbfd1e5);
 		this.Scene.fog = new Fog(0xbfd1e5, 300, 2000); // 0xffffff for that og minecraft fog
 
 		this.Renderer = new WebGLRenderer({ antialias: true });

@@ -181,7 +181,6 @@ export class Chunk {
 	//
 
 	Generate(): void {
-		console.log("creating chunk");
 		if (!this.fetched) {
 			console.warn("Chunk not fetched yet");
 			return;
