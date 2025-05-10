@@ -2,7 +2,7 @@ import db from "./db.js";
 import { Response } from "express";
 import { Settings } from "./Settings.js";
 
-const { ChunkBlockWidth, ChunkBlockHeight, BlockSize } = Settings;
+const { ChunkBlockWidth, ChunkBlockHeight } = Settings;
 
 export function getByteSize(obj: unknown): number {
 	const str = JSON.stringify(obj);
@@ -30,18 +30,18 @@ export function xyzToId(x: number, y: number, z: number): number {
 
 export function getWorldBlockPosition(blockPosition: Vector3, chunkPosition: Vector2): Vector3 {
 	const chunkWorldPosition = {
-		x: chunkPosition.x * ChunkBlockWidth * BlockSize,
-		z: chunkPosition.z * ChunkBlockWidth * BlockSize,
+		x: chunkPosition.x * ChunkBlockWidth,
+		z: chunkPosition.z * ChunkBlockWidth,
 	};
 
 	const localBlockPosition = {
-		x: blockPosition.x * BlockSize,
-		y: blockPosition.y * BlockSize,
-		z: blockPosition.z * BlockSize,
+		x: blockPosition.x,
+		y: blockPosition.y,
+		z: blockPosition.z,
 	};
 	return {
 		x: chunkWorldPosition.x + localBlockPosition.x,
-		y: blockPosition.y * BlockSize,
+		y: blockPosition.y,
 		z: chunkWorldPosition.z + localBlockPosition.z,
 	};
 }

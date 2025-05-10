@@ -16,8 +16,7 @@ import {
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { Workspace } from "../../Controllers/Workspace";
 
-const { ChunkBlockWidth, ChunkBlockHeight, BlockSize } = Settings;
-const halfBlockSize = BlockSize / 2;
+const { ChunkBlockWidth, ChunkBlockHeight } = Settings;
 const halfPi = Math.PI / 2;
 
 let material: Material;
@@ -42,17 +41,17 @@ const getTexture = async () => {
 getTexture();
 
 const planePrehabs = {
-	px: new PlaneGeometry(BlockSize, BlockSize).rotateY(halfPi).translate(halfBlockSize, 0, 0),
+	px: new PlaneGeometry(1, 1).rotateY(halfPi).translate(0.5, 0, 0),
 
-	nx: new PlaneGeometry(BlockSize, BlockSize).rotateY(-halfPi).translate(-halfBlockSize, 0, 0),
+	nx: new PlaneGeometry(1, 1).rotateY(-halfPi).translate(-0.5, 0, 0),
 
-	py: new PlaneGeometry(BlockSize, BlockSize).rotateX(-halfPi).translate(0, halfBlockSize, 0),
+	py: new PlaneGeometry(1, 1).rotateX(-halfPi).translate(0, 0.5, 0),
 
-	ny: new PlaneGeometry(BlockSize, BlockSize).rotateX(halfPi).translate(0, -halfBlockSize, 0),
+	ny: new PlaneGeometry(1, 1).rotateX(halfPi).translate(0, -0.5, 0),
 
-	pz: new PlaneGeometry(BlockSize, BlockSize).translate(0, 0, halfBlockSize),
+	pz: new PlaneGeometry(1, 1).translate(0, 0, 0.5),
 
-	nz: new PlaneGeometry(BlockSize, BlockSize).rotateY(Math.PI).translate(0, 0, -halfBlockSize),
+	nz: new PlaneGeometry(1, 1).rotateY(Math.PI).translate(0, 0, -0.5),
 };
 
 export class Chunk {

@@ -100,15 +100,19 @@ export default (): PointerLockControls => {
 	const velocity = new Vector3();
 
 	const Settings = {
-		speed: 500,
+		speed: 60,
 		friction: 8,
 	};
 
-	LocalPlayerController.Gui.add(Settings, "speed", 1, 2000, 1);
+	LocalPlayerController.Gui.add(Settings, "speed", 1, 240, 1);
 
 	let previousPosition: Vector3;
+	const halfPlayerWidth = LocalPlayerController.PlayerWidth * 0.5;
+	const halfPlayerHeight = LocalPlayerController.PlayerHeight * 0.5;
+	const playerPosition = LocalPlayerController.PlayerPosition;
 
 	RunService.Heartbeat.Connect((delta) => {
+		delta = Math.min(delta, 0.5);
 		if (controls.isLocked === true) {
 			velocity.multiplyScalar(1 - Settings.friction * delta); // friction value
 
@@ -123,41 +127,82 @@ export default (): PointerLockControls => {
 			const euler = new Euler(0, 0, 0, "YXZ");
 			euler.setFromQuaternion(controls.object.quaternion);
 			const yaw = new Quaternion().setFromEuler(new Euler(0, euler.y, 0));
-
-			// Step 3: Apply yaw-only rotation to direction
 			const movement = direction.applyQuaternion(yaw);
 
-			// Step 4: Add Y movement separately
 			if (moveUp) direction.y += 1;
 			if (moveDown) direction.y -= 1;
 
 			velocity.add(movement.multiplyScalar(Settings.speed * delta));
 
-			const newPosition = controls.object.position.clone().add(velocity.clone().multiplyScalar(delta));
+			const newPosition = playerPosition.clone().add(velocity.clone().multiplyScalar(delta));
 
 			// Handle collision
 			if (previousPosition) {
-				// const direction = previousPosition.clone().sub(controls.object.position);
-				// const direction = controls.object.position.clone().sub(previousPosition);
-				const direction = new Vector3().subVectors(newPosition, controls.object.position);
-				const raycaster = new Raycaster(
-					controls.object.position,
-					direction.clone().normalize(),
-					0,
-					direction.length() + 1,
-				);
+				const distanceTraveled = new Vector3().subVectors(newPosition, playerPosition);
 
-				const ray = raycaster.intersectObjects(Workspace.Scene.children)[0];
+				// Shoot a raycast in each direction and only allows movement if it doesnt hit anything
+				// Clone current position
+				const tempPosition = playerPosition.clone();
+				const willCollide = (
+					origin: Vector3,
+					direction: Vector3,
+					distance: number,
+					offset: number,
+				): boolean => {
+					const raycaster = new Raycaster(origin, direction.clone().normalize(), 0, distance + offset);
+					const intersects = raycaster.intersectObjects(Workspace.Scene.children, true);
+					return intersects.length > 0;
+				};
 
-				if (ray && ray.normal) {
-					console.log("HIT");
-					// stop player from clipping though the world
-					newPosition.copy(ray.point.add(ray.normal));
-					velocity.set(0, 0, 0);
+				// Move X
+				const nextX = tempPosition.clone().add(new Vector3(distanceTraveled.x, 0, 0));
+				if (
+					!willCollide(
+						tempPosition,
+						new Vector3(Math.sign(distanceTraveled.x), 0, 0),
+						Math.abs(distanceTraveled.x),
+						halfPlayerWidth,
+					)
+				) {
+					tempPosition.x = nextX.x;
+				} else {
+					velocity.x = 0;
 				}
+
+				// Move Z
+				const nextZ = tempPosition.clone().add(new Vector3(0, 0, distanceTraveled.z));
+				if (
+					!willCollide(
+						tempPosition,
+						new Vector3(0, 0, Math.sign(distanceTraveled.z)),
+						Math.abs(distanceTraveled.z),
+						halfPlayerWidth,
+					)
+				) {
+					tempPosition.z = nextZ.z;
+				} else {
+					velocity.z = 0;
+				}
+
+				const nextY = tempPosition.clone().add(new Vector3(0, distanceTraveled.y, 0));
+				if (
+					!willCollide(
+						tempPosition,
+						new Vector3(0, Math.sign(distanceTraveled.y), 0),
+						Math.abs(distanceTraveled.y),
+						halfPlayerHeight,
+					)
+				) {
+					tempPosition.y = nextY.y;
+				} else {
+					velocity.y = 0;
+				}
+
+				newPosition.copy(tempPosition);
 			}
 
-			controls.object.position.copy(newPosition);
+			playerPosition.copy(newPosition);
+			controls.object.position.copy(playerPosition.clone().add(LocalPlayerController.CameraOffset));
 
 			previousPosition = newPosition;
 		}

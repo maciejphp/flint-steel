@@ -166,12 +166,12 @@ class Class {
 					const generateBlock = (position: Vector3): number => {
 						const { x, y, z } = position;
 
-						const scale = 600;
+						const scale = 75;
 						let noiseValue = this.noise(x / scale, (y * 2) / scale, z / scale);
-						noiseValue += this.noise(x / 100, y / 100, z / 100) / 10;
+						noiseValue += this.noise(x / 12.5, y / 12.5, z / 12.5) / 0.8;
 
-						noiseValue -= y / ChunkBlockHeight / 6;
-						noiseValue += ChunkBlockHeight / y;
+						noiseValue -= (y * 8) / ChunkBlockHeight / 6;
+						noiseValue += ChunkBlockHeight / (y * 8);
 
 						if (noiseValue > 0.05) {
 							return 1;

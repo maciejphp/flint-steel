@@ -2,7 +2,7 @@ import { Vector3 } from "three";
 import { Settings } from "./Settings";
 import { AxiosResponse } from "axios";
 
-const { ChunkBlockHeight, ChunkBlockWidth, BlockSize } = Settings;
+const { ChunkBlockHeight, ChunkBlockWidth } = Settings;
 
 export function xyzToId(x: number, y: number, z: number): number {
 	return x * ChunkBlockHeight * ChunkBlockWidth + y * ChunkBlockWidth + z;
@@ -20,11 +20,8 @@ export function idToPosition(id: number): Vector3 {
 }
 
 export function getWorldBlockPosition(blockPosition: Vector3, chunkPosition: Vector3): Vector3 {
-	const chunkWorldPosition = chunkPosition
-		.multiply(new Vector3(ChunkBlockWidth, ChunkBlockHeight, ChunkBlockWidth))
-		.multiplyScalar(BlockSize);
-	const localBlockPosition = blockPosition.multiplyScalar(BlockSize);
-	return chunkWorldPosition.add(localBlockPosition);
+	const chunkWorldPosition = chunkPosition.multiply(new Vector3(ChunkBlockWidth, ChunkBlockHeight, ChunkBlockWidth));
+	return chunkWorldPosition.add(blockPosition);
 }
 
 export function getByteSize(obj: unknown): number {
@@ -36,7 +33,7 @@ export function getByteSize(obj: unknown): number {
 export const getChunkId = (x: number, z: number): string => `${x},${z}`;
 
 export function getChunkBlockPosition(blockPosition: Vector3, chunkPosition: Vector3): Vector3 {
-	return blockPosition.sub(chunkPosition.multiplyScalar(BlockSize * ChunkBlockWidth)).divideScalar(BlockSize);
+	return blockPosition.sub(chunkPosition.multiplyScalar(ChunkBlockWidth));
 }
 
 // export function setBoxUv(box: BoxGeometry, textureIndex: number): void {
@@ -56,7 +53,7 @@ export function getChunkBlockPosition(blockPosition: Vector3, chunkPosition: Vec
 // }
 
 export function getChunkPosition(blockPosition: Vector3): Vector3 {
-	const chunkPosition = blockPosition.divideScalar(ChunkBlockWidth * BlockSize);
+	const chunkPosition = blockPosition.divideScalar(ChunkBlockWidth);
 	return new Vector3(Math.floor(chunkPosition.x), 0, Math.floor(chunkPosition.z));
 }
 
