@@ -17,12 +17,12 @@ class Class {
 			this.BlockFlipbookTexture.Set(image);
 		};
 
-		this.Camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 5000);
+		this.Camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 1000);
 		this.Camera.position.y = 10;
 
 		this.Scene = new Scene();
 		// this.Scene.background = new Color(0xbfd1e5);
-		this.Scene.fog = new Fog(0x6a94bc, 300, 2000); // 0xffffff for that og minecraft fog
+		this.Scene.fog = new Fog(0x6a94bc, 50, 300); // 0xffffff for that og minecraft fog
 
 		this.Renderer = new WebGLRenderer({ antialias: true });
 		this.Renderer.setPixelRatio(window.devicePixelRatio);

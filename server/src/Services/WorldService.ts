@@ -168,7 +168,7 @@ class Class {
 
 						const scale = 75;
 						let noiseValue = this.noise(x / scale, (y * 2) / scale, z / scale);
-						noiseValue += this.noise(x / 12.5, y / 12.5, z / 12.5) / 0.8;
+						noiseValue += this.noise(x / 12.5, y / 12.5, z / 12.5) / 10;
 
 						noiseValue -= (y * 8) / ChunkBlockHeight / 6;
 						noiseValue += ChunkBlockHeight / (y * 8);

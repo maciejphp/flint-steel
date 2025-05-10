@@ -8,31 +8,31 @@ import { RunService } from "./Controllers/RunService";
 const modules = import.meta.glob("./controllers/*.ts", { eager: true });
 
 // Wait for all files to register
-await Promise.all(Object.values(modules));
+Promise.all(Object.values(modules)).then(async () => {
+	// After all controllers are registered, call Init on each
+	for (const name of ControllerService.GetControllerNames()) {
+		const controller = ControllerService.GetController(name);
 
-// After all controllers are registered, call Init on each
-for (const name of ControllerService.GetControllerNames()) {
-	const controller = ControllerService.GetController(name);
-
-	// Only call Init if it exists
-	if (typeof controller.Init === "function") {
-		await controller.Init();
+		// Only call Init if it exists
+		if (typeof controller.Init === "function") {
+			await controller.Init();
+		}
 	}
-}
 
-const LocalPlayerController = ControllerService.GetController("LocalPlayerController");
+	const LocalPlayerController = ControllerService.GetController("LocalPlayerController");
 
-const stats = new Stats();
+	const stats = new Stats();
 
-const container = document.getElementById("app") as HTMLDivElement;
-container.appendChild(stats.dom);
+	const container = document.getElementById("app") as HTMLDivElement;
+	container.appendChild(stats.dom);
 
-RunService.Heartbeat.Connect(() => {
-	stats.update();
+	RunService.Heartbeat.Connect(() => {
+		stats.update();
+	});
+
+	LocalPlayerController.Fly = true;
+
+	load3dNoise();
 });
-
-LocalPlayerController.Fly = true;
-
-load3dNoise();
 
 // start 287

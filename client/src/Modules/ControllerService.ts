@@ -22,7 +22,7 @@ class ControllerService {
 			const instance = new constructor();
 			this.Controllers.set(name, instance);
 		}
-		return this.Controllers.get(name)!;
+		return this.Controllers.get(name) as Controllers[K];
 	}
 
 	static GetControllerNames(): ControllerNames[] {
