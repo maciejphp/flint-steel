@@ -4,8 +4,8 @@ import { ControllerService } from "./Modules/ControllerService";
 import { RunService } from "./Controllers/RunService";
 
 // Auto-import all controllers during build
-// loadControllers.ts
-const modules = import.meta.glob("./controllers/*.ts", { eager: true });
+// const modules = import.meta.glob("./controllers/*.ts", { eager: true });
+const modules = import.meta.glob("/src/controllers/*.ts", { eager: true });
 
 // Wait for all files to register
 Promise.all(Object.values(modules)).then(async () => {
