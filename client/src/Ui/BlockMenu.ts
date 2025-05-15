@@ -5,7 +5,7 @@ const UiController = ControllerService.GetController("UiController");
 const HotbarController = ControllerService.GetController("HotbarController");
 
 // Wait for the flipbook texture to be loaded
-Workspace.getBlockFlipbookTexture().then(() => {
+Workspace.WaitForGameLoaded().then(() => {
 	(document.getElementById("go-to-block-upload-button") as HTMLButtonElement).addEventListener("click", () => {
 		UiController.ToggleBlockMenu.Fire(false);
 		UiController.ToggleBlockUpload.Fire(true);
@@ -24,16 +24,16 @@ Workspace.getBlockFlipbookTexture().then(() => {
 
 	const blockMenu = document.getElementById("block-menu") as HTMLDivElement;
 
-	for (let index = 1; index <= Workspace.BlockCount; index++) {
+	Workspace.Blocks.forEach((block) => {
 		const div = document.createElement("div");
-		div.textContent = `(${index}) Block`;
+		div.textContent = `${block.Name}`;
+		div.style.cursor = "pointer";
 
 		div.onclick = () => {
-			console.log(`Clicked on block ${index}`);
-			HotbarController.Slots[HotbarController.SelectedSlotId].Block.Id = index;
+			HotbarController.Slots[HotbarController.SelectedSlotId].Block = block;
 			HotbarController.Update();
 		};
 
 		blockMenu.appendChild(div);
-	}
+	});
 });

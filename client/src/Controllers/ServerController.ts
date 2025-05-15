@@ -38,10 +38,11 @@ class Class {
 		return [response.data.ChunkData, success];
 	}
 
-	async UploadBlock(data: string): Promise<[string, boolean]> {
-		console.log("Uploading block");
+	async UploadBlock(data: string, name: string): Promise<[string, boolean]> {
+		if (name === "") return ["Name is empty", false];
+
 		document.getElementById("loading-screen-message")!.innerHTML += "<p>Loading chunks...</p>";
-		const response = await api.post("/uploadBlock", { Image: data });
+		const response = await api.post("/uploadBlock", { Image: data, Name: name });
 		const success = handleResponse(response);
 		response.data.Error as number[][];
 		return [response.data.Error, success];

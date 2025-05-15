@@ -13,7 +13,7 @@ export async function query<t>(
 	query: string,
 	values: (number | string)[],
 	res?: Response,
-): Promise<[[[t | undefined]] | undefined, boolean]> {
+): Promise<[[t[]] | undefined, boolean]> {
 	try {
 		return [await (db.query(query, values) as unknown as [[t]]), true];
 	} catch (err) {

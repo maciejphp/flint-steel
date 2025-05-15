@@ -6,8 +6,6 @@ import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 import { ControllerService } from "../Modules/ControllerService";
 import { RunService } from "./RunService";
 
-console.log("locaplcontroller");
-
 class LocalPlayerController {
 	Controls!: PointerLockControls;
 	Gui = new GUI({ title: "Settings" });

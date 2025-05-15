@@ -1,6 +1,7 @@
 import { ControllerService } from "../Modules/ControllerService";
+import { Workspace } from "./Workspace";
 
-const defaultHotbar = [1, 2, 3];
+const defaultHotbar = [0, 1, 2];
 
 class HotbarController {
 	Slots: { Div: HTMLDivElement; Block: Block }[] = [];
@@ -15,14 +16,15 @@ class HotbarController {
 			} else {
 				slot.Div.style.backgroundColor = "red";
 			}
-			slot.Div.textContent = `blockId: ${slot.Block.Id}`;
+			slot.Div.textContent = `${slot.Block.Name}`;
 		});
 
 		console.log("Selected block", this.Slots);
 		LocalPlayerController.SelectedBlock = this.Slots[this.SelectedSlotId].Block;
 	}
 
-	Init() {
+	async Init() {
+		await Workspace.WaitForGameLoaded();
 		const LocalPlayerController = ControllerService.GetController("LocalPlayerController");
 		const UiController = ControllerService.GetController("UiController");
 		const inventory = document.getElementById("Inventory") as HTMLDivElement;
@@ -32,7 +34,7 @@ class HotbarController {
 			const slot = document.createElement("div");
 			slot.textContent = `blockId: ${blockId}`;
 
-			const blockObject = { Id: blockId };
+			const blockObject = Workspace.Blocks[blockId];
 
 			slot.onclick = () => {
 				LocalPlayerController.SelectedBlock = blockObject;
@@ -56,6 +58,14 @@ class HotbarController {
 		this.Update();
 
 		document.addEventListener("keydown", (event) => {
+			const target = event.target as HTMLElement;
+			const isTypingInInput =
+				target.tagName === "INPUT" ||
+				target.tagName === "TEXTAREA" ||
+				(target as HTMLElement).isContentEditable;
+
+			if (isTypingInInput) return;
+
 			const key = parseInt(event.key, 10);
 			if (!isNaN(key) && key > 0 && key <= defaultHotbar.length) {
 				this.SelectedSlotId = key - 1;

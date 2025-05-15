@@ -42,7 +42,7 @@ app.set("trust proxy", 1);
 app.use(express.json());
 
 import { WorldService } from "./Services/WorldService.js";
-import { getChunkId } from "./Functions.js";
+import { getChunkId, query } from "./Functions.js";
 import worldApi from "./worldApi.js";
 app.use("/world", worldApi);
 
@@ -54,6 +54,11 @@ app.use("/", getFlipbookApi);
 
 app.get("/", (req, res) => {
 	res.send("Hello World!");
+});
+
+app.get("/backup", async (req, res) => {
+	const [result] = await query("SELECT * FROM blocks; SELECT * FROM chunks;", []);
+	res.json(result);
 });
 
 // app.listen(port, () => {

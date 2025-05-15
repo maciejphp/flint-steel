@@ -84,7 +84,7 @@ export default (): PointerLockControls => {
 
 	const Settings = {
 		speed: 60,
-		friction: 8,
+		friction: 9,
 	};
 
 	LocalPlayerController.Gui.add(Settings, "speed", 1, 240, 1);

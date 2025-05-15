@@ -8,7 +8,6 @@ class ControllerService {
 	private static Constructor = new Map<ControllerNames, ControllerConstructors[ControllerNames]>();
 
 	static Register<K extends ControllerNames>(name: K, constructor: ControllerConstructors[K]): void {
-		console.log("registering", name);
 		if (this.Constructor.has(name)) {
 			throw new Error(`Controller '${name}' is already registered.`);
 		}

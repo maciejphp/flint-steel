@@ -22,7 +22,9 @@ const halfPi = Math.PI / 2;
 let material: Material;
 let textureRatio: number;
 
-Workspace.getBlockFlipbookTexture().then((image) => {
+Workspace.WaitForGameLoaded().then(() => {
+	console.log(Workspace);
+	const image = Workspace.AtlasTexture;
 	const texture = new TextureLoader().load(image.src);
 	texture.colorSpace = SRGBColorSpace;
 	texture.magFilter = NearestFilter;
@@ -67,7 +69,6 @@ export class Chunk {
 	//
 
 	UpdateBlockFromPositionId(positionId: number, blockId: number): void {
-		console.log(positionId, blockId);
 		const chunkBlockPosition = idToPosition(positionId);
 		this.blocks[positionId] = blockId;
 

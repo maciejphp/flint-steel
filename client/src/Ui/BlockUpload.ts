@@ -17,6 +17,7 @@ UiController.ToggleBlockUpload.Connect((open) => {
 	}
 });
 
+const nameInput = document.getElementById("block-upload-name-input") as HTMLInputElement;
 const imageInput = document.getElementById("block-upload-upload") as HTMLInputElement;
 const uploadButton = document.getElementById("block-upload-button") as HTMLImageElement;
 const canvas = document.getElementById("block-upload-canvas") as HTMLCanvasElement;
@@ -88,9 +89,10 @@ uploadButton.addEventListener("click", () => {
 
 	console.log(imageInput.files);
 
-	ServerController.UploadBlock(imageData).then(([error, succes]) => {
+	ServerController.UploadBlock(imageData, nameInput.value).then(([error, succes]) => {
 		console.log("Upload result:", error, succes);
 	});
+	nameInput.value = "";
 	clearImage();
 });
 

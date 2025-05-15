@@ -5,12 +5,14 @@ export const Settings = {
 	renderDistance: 3,
 	chunkUnloadDistance: 20,
 
-	server: "http://localhost:3000",
-	// server: "https://flint-and-steel.glitch.me",
+	// server: "http://localhost:3000",
+	server: "https://flint-and-steel.glitch.me",
 };
 
 declare global {
 	interface Block {
 		Id: number;
+		Name: string;
+		Uses: number;
 	}
 }
