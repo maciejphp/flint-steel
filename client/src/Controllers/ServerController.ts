@@ -38,6 +38,15 @@ class Class {
 		return [response.data.ChunkData, success];
 	}
 
+	async UploadBlock(data: string): Promise<[string, boolean]> {
+		console.log("Uploading block");
+		document.getElementById("loading-screen-message")!.innerHTML += "<p>Loading chunks...</p>";
+		const response = await api.post("/uploadBlock", { Image: data });
+		const success = handleResponse(response);
+		response.data.Error as number[][];
+		return [response.data.Error, success];
+	}
+
 	public static get(): Class {
 		if (!Class.instance) {
 			Class.instance = new Class();

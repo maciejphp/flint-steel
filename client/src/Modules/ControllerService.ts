@@ -4,7 +4,7 @@ type Controllers = {
 };
 
 class ControllerService {
-	private static Controllers = new Map<ControllerNames, Controllers[ControllerNames]>();
+	static Controllers = new Map<ControllerNames, Controllers[ControllerNames]>();
 	private static Constructor = new Map<ControllerNames, ControllerConstructors[ControllerNames]>();
 
 	static Register<K extends ControllerNames>(name: K, constructor: ControllerConstructors[K]): void {

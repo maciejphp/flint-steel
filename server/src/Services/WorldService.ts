@@ -92,7 +92,6 @@ class Class {
 
 		// Get chunks from database
 		const chunkIdList = chunkIdsToRequest.map((item) => `'${item}'`).join(", ");
-		console.log("chunkPositions", chunkIdList);
 		const [result, success] = await query<{ ChunkId: string; Data: string }>(
 			`SELECT * FROM chunks WHERE ChunkId IN (${chunkIdList});`,
 			[],

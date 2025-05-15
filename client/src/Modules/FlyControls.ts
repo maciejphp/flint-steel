@@ -15,23 +15,6 @@ export default (): PointerLockControls => {
 	let moveUp = false;
 	let moveDown = false;
 
-	const blocker = document.getElementById("blocker") as HTMLDivElement;
-	const instructions = document.getElementById("instructions") as HTMLDivElement;
-
-	instructions.addEventListener("click", function () {
-		controls.lock();
-	});
-
-	controls.addEventListener("lock", function () {
-		instructions.style.display = "none";
-		blocker.style.display = "none";
-	});
-
-	controls.addEventListener("unlock", function () {
-		blocker.style.display = "block";
-		instructions.style.display = "";
-	});
-
 	Workspace.Scene.add(controls.object);
 
 	document.addEventListener("keydown", (event: KeyboardEvent) => {
@@ -113,7 +96,7 @@ export default (): PointerLockControls => {
 
 	RunService.Heartbeat.Connect((delta) => {
 		delta = Math.min(delta, 0.5);
-		if (controls.isLocked === true) {
+		if (controls.isLocked) {
 			velocity.multiplyScalar(1 - Settings.friction * delta); // friction value
 
 			// Step 1: Create direction vector (horizontal only — Y will be added separately if needed)

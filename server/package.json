@@ -10,11 +10,14 @@
   },
   "dependencies": {
     "alea": "^1.0.1",
+    "canvas": "^2.11.2",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "fs": "^0.0.1-security",
     "mysql2": "^3.14.0",
     "nodemon": "^3.1.10",
+    "sharp": "^0.34.1",
     "simplex-noise": "^4.0.3",
     "socket.io": "^4.8.1"
   },

@@ -1,17 +1,19 @@
 import { PerspectiveCamera, WebGLRenderer, Fog, Scene } from "three";
 import { Value } from "../Utils/Value";
+import { Settings } from "../Modules/Settings";
 
 class Class {
 	private static instance: Class;
-	BlockFlipbookTexture = new Value<HTMLImageElement | undefined>();
+	private BlockFlipbookTexture = new Value<HTMLImageElement | undefined>();
+	BlockCount = 0;
 	Camera: PerspectiveCamera;
 	Scene: Scene;
 	Renderer: WebGLRenderer;
 
 	private constructor() {
 		const image = new Image();
-		// image.src = "../../texture.png";
-		image.src = "https://raw.githubusercontent.com/maciejphp/flint-steel/refs/heads/main/client/public/texture.png";
+		image.src = `${Settings.server}/flipbook`;
+		// image.src = "https://cdn.glitch.global/2ba9cbe6-f362-4b66-a674-7d191aacabb6/flipbook.png?v=1747216470021";
 
 		image.onload = () => {
 			this.BlockFlipbookTexture.Set(image);
@@ -35,6 +37,17 @@ class Class {
 
 			this.Renderer.setSize(window.innerWidth, window.innerHeight);
 		});
+	}
+
+	async getBlockFlipbookTexture() {
+		return (
+			Workspace.BlockFlipbookTexture.Value ??
+			(await new Promise<HTMLImageElement>((resolve) => {
+				Workspace.BlockFlipbookTexture.Changed((image) => {
+					if (image) resolve(image);
+				});
+			}))
+		);
 	}
 
 	public static get(): Class {

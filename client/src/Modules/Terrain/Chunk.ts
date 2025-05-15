@@ -22,23 +22,16 @@ const halfPi = Math.PI / 2;
 let material: Material;
 let textureRatio: number;
 
-const getTexture = async () => {
-	const image =
-		Workspace.BlockFlipbookTexture.Value ??
-		(await new Promise<HTMLImageElement>((resolve) => {
-			Workspace.BlockFlipbookTexture.Changed((image) => {
-				if (image) resolve(image);
-			});
-		}));
-
+Workspace.getBlockFlipbookTexture().then((image) => {
 	const texture = new TextureLoader().load(image.src);
 	texture.colorSpace = SRGBColorSpace;
 	texture.magFilter = NearestFilter;
 
+	Workspace.BlockCount = image.width / image.height;
 	material = new MeshPhongMaterial({ map: texture });
-	textureRatio = 1 / (image.width / image.height);
-};
-getTexture();
+
+	textureRatio = 1 / Workspace.BlockCount;
+});
 
 const planePrehabs = {
 	px: new PlaneGeometry(1, 1).rotateY(halfPi).translate(0.5, 0, 0),

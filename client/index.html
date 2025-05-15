@@ -2,11 +2,9 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FLINT AND STEEL</title>
     <link rel="stylesheet" href="style.css">
-
   </head>
   <body>
     <div id="app">
@@ -33,6 +31,32 @@
       </div>
     </div>
 
+    <!-- Block Upload Window -->
+    <div id="block-menu">
+      <div class="header">
+        <h2>Select a block</h2>
+        (reload page if you don't see your block)
+        <button id="go-to-block-upload-button">Upload a block</button>
+      </div>
+    </div>
+
+    <!-- Block Upload Window -->
+    <div id="block-upload">
+      <div class="header">
+        <h2>Upload New Block</h2>
+        <button id="go-to-block-menu-button">Block Menu</button>
+      </div>
+      <input id="block-upload-name-input" type="text" placeholder="Block Name">
+      <div id="block-upload-dropzone-container">
+        <div id="block-upload-dropzone">
+            Drag and drop an image here or click to upload
+        </div>
+        <canvas id="block-upload-canvas" width="64" height="64"></canvas>
+      </div>
+      <input type="file" id="block-upload-upload" accept="image/*"  style="display: none;">
+      <p style="color: white; margin-bottom: 15px;">The image will be resized to a 64px by 64px format.</p>
+      <button id="block-upload-button" >Upload Block</button>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

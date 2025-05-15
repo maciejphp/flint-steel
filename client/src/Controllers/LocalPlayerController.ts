@@ -11,6 +11,7 @@ console.log("locaplcontroller");
 class LocalPlayerController {
 	Controls!: PointerLockControls;
 	Gui = new GUI({ title: "Settings" });
+	SelectedBlock!: Block;
 
 	PlayerHeight = 0.99;
 	PlayerWidth = 0.5;
@@ -40,6 +41,8 @@ class LocalPlayerController {
 		} else {
 			this.PlayerPosition.y = 40;
 		}
+
+		this.Controls.object.position.copy(this.PlayerPosition.clone().add(this.CameraOffset));
 
 		// Display coordinates
 		const obj = {

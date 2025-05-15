@@ -41,10 +41,16 @@ app.use(
 app.set("trust proxy", 1);
 app.use(express.json());
 
-import worldApi from "./worldApi.js";
 import { WorldService } from "./Services/WorldService.js";
 import { getChunkId } from "./Functions.js";
+import worldApi from "./worldApi.js";
 app.use("/world", worldApi);
+
+import uploadBlockApi from "./uploadBlockApi.js";
+app.use("/", uploadBlockApi);
+
+import getFlipbookApi from "./getFlipbookApi.js";
+app.use("/", getFlipbookApi);
 
 app.get("/", (req, res) => {
 	res.send("Hello World!");

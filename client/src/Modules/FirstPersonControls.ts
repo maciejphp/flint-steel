@@ -91,7 +91,7 @@ export default (): PointerLockControls => {
 	const direction = new Vector3();
 
 	RunService.Heartbeat.Connect((delta) => {
-		if (controls.isLocked === true) {
+		if (controls.isLocked) {
 			raycaster.ray.origin.copy(controls.object.position);
 			raycaster.ray.origin.y -= 10;
 

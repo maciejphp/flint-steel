@@ -72,3 +72,8 @@ export const handleResponse = (response: AxiosResponse): boolean => {
 	}
 	return success;
 };
+
+declare global {
+	// eslint-disable-next-line @typescript-eslint/ban-types
+	type Simplify<T> = { [K in keyof T]: T[K] } & {};
+}

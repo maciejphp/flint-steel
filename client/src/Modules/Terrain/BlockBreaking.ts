@@ -3,7 +3,6 @@ import { Workspace } from "../../Controllers/Workspace";
 import { WorldController } from "../../Controllers/WorldController";
 import { ServerController } from "../../Controllers/ServerController";
 import { getChunkBlockPosition, getChunkId, getChunkPosition, positionToId } from "../Functions";
-import { InventoryController } from "../../Controllers/InventoryController";
 import { ControllerService } from "../ControllerService";
 
 const LocalPlayerController = ControllerService.GetController("LocalPlayerController");
@@ -55,7 +54,7 @@ window.addEventListener("mousedown", (e) => {
 				if (ray && ray.distance < 8) {
 					if (!ray.normal) return;
 					let blockPosition = ray.point.add(ray.normal.multiplyScalar(0.5));
-					const block = InventoryController.SelectedBlock;
+					const block = LocalPlayerController.SelectedBlock;
 
 					blockPosition = new Vector3(
 						Math.round(blockPosition.x),
