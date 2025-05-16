@@ -12,13 +12,17 @@ export class World {
 	ChunksThatAreGettingFetched = new Set<Chunk>();
 
 	constructor() {
-		// Fetch chunks
+		// Render 1 chunk at a time
 		RunService.Heartbeat.Connect(async () => {
-			// Render 1 chunk at a time
 			this.ChunkGenerateQueue.shift()?.Generate();
+		});
 
+		// Fetch chunks every second
+		setInterval(async () => {
 			// Fetch chunks
 			if (this.ChunkFetchQueue.length === 0) return;
+
+			console.log("Fetching chunks", this.ChunkFetchQueue.length);
 
 			this.ChunkFetchQueue.forEach((chunk) => this.ChunksThatAreGettingFetched.add(chunk));
 			const chunkPositions = this.ChunkFetchQueue.map((chunk) => chunk.chunkPosition);
@@ -38,7 +42,7 @@ export class World {
 				chunk.blocks = value;
 				chunk.fetched = true;
 			});
-		});
+		}, 1000);
 
 		// Handle block breaking & breaaking
 		ServerController.Socket.on("updateBlock", (data) => {
@@ -48,6 +52,7 @@ export class World {
 
 	LoadChunk(position: Vector3): Chunk {
 		// Create new "ghost" chunks
+		// if (this.ChunkFetchQueue.length > Settings.MaxChunksInFetchQueue)
 		const chunk = new Chunk(position);
 		this.LoadedChunks.set(getChunkId(position.x, position.z), chunk);
 		this.ChunkFetchQueue.push(chunk);
@@ -72,13 +77,14 @@ export class World {
 		chunk.chunkBack = ensureChunk(x, z - 1);
 
 		if (
+			!chunk.insideGenerateQueue &&
 			chunk.chunkRight.fetched &&
 			chunk.chunkLeft.fetched &&
 			chunk.chunkFront.fetched &&
 			chunk.chunkBack.fetched
 		) {
 			this.ChunkGenerateQueue.push(chunk);
-			chunk.generated = true;
+			chunk.insideGenerateQueue = true;
 		}
 	}
 
