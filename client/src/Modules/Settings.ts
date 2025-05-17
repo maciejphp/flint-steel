@@ -6,8 +6,7 @@ export const Settings = {
 	renderDistance: 6,
 	chunkUnloadDistance: 20,
 
-	server: "http://localhost:3000",
-	// server: "https://flint-and-steel.glitch.me",
+	server: process.env.NODE_ENV === "production" ? "https://flint-and-steel.glitch.me" : "http://localhost:3000",
 };
 
 declare global {
