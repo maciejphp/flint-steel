@@ -36,7 +36,6 @@ class Class {
 
 		// fill canvas with texture atlas
 		blocks.forEach(async (block, index) => {
-			console.log("drawing image", block.Name, index);
 			const newImage = (await loadImage(block.Data)) as unknown as HTMLImageElement;
 			this.Ctx.drawImage(newImage, imageSize * index, 0, imageSize, imageSize);
 		});
@@ -79,7 +78,6 @@ class Class {
 			// fs.writeFileSync("flipbook.png", this.Canvas.toBuffer("image/png"));
 
 			// Save to database
-			console.log(buffer);
 			const [, success] = await query(
 				`INSERT INTO blocks (Name, Data)
 				VALUES (?, ?);`,

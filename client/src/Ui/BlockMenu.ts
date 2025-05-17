@@ -1,5 +1,6 @@
 import { Workspace } from "../Controllers/Workspace";
 import { ControllerService } from "../Modules/ControllerService";
+import { CreateBlockDisplay } from "../Modules/CreateBlockDisplay";
 
 const UiController = ControllerService.GetController("UiController");
 const HotbarController = ControllerService.GetController("HotbarController");
@@ -22,18 +23,21 @@ Workspace.WaitForGameLoaded().then(() => {
 		blockMenu.style.display = openIt ? "block" : "none";
 	});
 
-	const blockMenu = document.getElementById("block-menu") as HTMLDivElement;
+	const blockMenuContainer = document.getElementById("block-menu-container") as HTMLDivElement;
 
 	Workspace.Blocks.forEach((block) => {
 		const div = document.createElement("div");
 		div.textContent = `${block.Name}`;
 		div.style.cursor = "pointer";
+		div.className = "block-menu-block";
 
 		div.onclick = () => {
 			HotbarController.Slots[HotbarController.SelectedSlotId].Block = block;
 			HotbarController.Update();
 		};
 
-		blockMenu.appendChild(div);
+		div.style.backgroundImage = `url(${CreateBlockDisplay(block)})`;
+
+		blockMenuContainer.appendChild(div);
 	});
 });

@@ -95,7 +95,7 @@ button:focus-visible {
   border-radius: 100%
 }
 
-#Inventory {
+#hotbar {
   display: flex;
   gap: 10px;
   bottom: 50px;
@@ -104,14 +104,14 @@ button:focus-visible {
   transform: translateX(-50%);
 }
 
-#Inventory > div{
+#hotbar > div, .block-menu-block{
   background-color: red;
+  background-size: cover;
   height: 80px;
   width: 80px;
   text-align: center;
   border: #1a1a1a 1px solid;
 }
-
 
 #loading-screen {
   position: absolute;
@@ -162,6 +162,16 @@ button:focus-visible {
   transform: translate(-50%, -50%);
   background-color: rgba(0,0,0,0.5);
   padding: 10px;
+}
+
+#block-menu-container {
+  display: flex;
+  /* flex-direction: column; */
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  flex-wrap: wrap;
+  overflow-y: auto;
 }
 
 .header {

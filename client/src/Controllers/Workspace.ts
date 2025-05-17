@@ -1,4 +1,15 @@
-import { PerspectiveCamera, WebGLRenderer, Fog, Scene } from "three";
+import {
+	PerspectiveCamera,
+	WebGLRenderer,
+	Fog,
+	Scene,
+	TextureLoader,
+	SRGBColorSpace,
+	NearestFilter,
+	ClampToEdgeWrapping,
+	LinearMipMapLinearFilter,
+	Texture,
+} from "three";
 import { Value } from "../Utils/Value";
 import { Settings } from "../Modules/Settings";
 import api from "../Modules/axiosConfig";
@@ -7,22 +18,36 @@ import { handleResponse } from "../Modules/Functions";
 class Class {
 	private static instance: Class;
 	private GameLoaded = new Value(false);
-	BlockCount = 0;
 	Camera: PerspectiveCamera;
 	Scene: Scene;
 	Renderer: WebGLRenderer;
 	Blocks!: Block[];
 	AtlasTexture!: HTMLImageElement;
+	Texture!: Texture;
 
 	private constructor() {
 		const image = new Image();
 		image.src = `${Settings.server}/flipbook`;
-		// image.src = "https://cdn.glitch.global/2ba9cbe6-f362-4b66-a674-7d191aacabb6/flipbook.png?v=1747216470021";
 
 		image.onload = () => {
 			this.AtlasTexture = image;
 			this.CheckIfGameLoaded();
 		};
+
+		new TextureLoader().load(image.src, (loadedTexture) => {
+			const textureSettings: Partial<Texture> = {
+				colorSpace: SRGBColorSpace,
+				wrapS: ClampToEdgeWrapping,
+				wrapT: ClampToEdgeWrapping,
+				generateMipmaps: true,
+				minFilter: LinearMipMapLinearFilter,
+				magFilter: NearestFilter,
+			};
+			Object.assign(loadedTexture, textureSettings);
+
+			this.Texture = loadedTexture;
+			this.CheckIfGameLoaded();
+		});
 
 		this.Camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 1000);
 		this.Camera.position.y = 10;
@@ -53,7 +78,7 @@ class Class {
 	}
 
 	private CheckIfGameLoaded() {
-		if (this.AtlasTexture && this.Blocks) {
+		if (this.AtlasTexture && this.Blocks && this.Texture) {
 			this.GameLoaded.Set(true);
 		}
 	}

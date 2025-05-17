@@ -2,9 +2,6 @@ import { getWorldBlockPosition, idToPosition, xyzToId } from "../Functions";
 import { Settings } from "../Settings";
 import {
 	Vector3,
-	TextureLoader,
-	SRGBColorSpace,
-	NearestFilter,
 	Mesh,
 	Matrix4,
 	PlaneGeometry,
@@ -25,14 +22,9 @@ let textureRatio: number;
 Workspace.WaitForGameLoaded().then(() => {
 	console.log(Workspace);
 	const image = Workspace.AtlasTexture;
-	const texture = new TextureLoader().load(image.src);
-	texture.colorSpace = SRGBColorSpace;
-	texture.magFilter = NearestFilter;
+	material = new MeshPhongMaterial({ map: Workspace.Texture });
 
-	Workspace.BlockCount = image.width / image.height;
-	material = new MeshPhongMaterial({ map: texture });
-
-	textureRatio = 1 / Workspace.BlockCount;
+	textureRatio = 1 / (image.width / image.height);
 });
 
 const planePrehabs = {
@@ -94,8 +86,8 @@ export class Chunk {
 					// const air = this.blocks[xyzToId(x, y, z)];
 
 					//   console.log(this.blocks[xyzToId(x, y, z)]);
-					const positionId = this.blocks[xyzToId(x, y, z)];
-					if (positionId === 0) continue;
+					const blockId = this.blocks[xyzToId(x, y, z)];
+					if (blockId === 0) continue;
 
 					const chunkBlockPosition = new Vector3(x, y, z);
 					const worldBlockPosition = getWorldBlockPosition(
@@ -157,7 +149,7 @@ export class Chunk {
 						//     ? 1
 						//     : 0;
 
-						setPlaneUv(plane, positionId);
+						setPlaneUv(plane, blockId);
 						geometries.push(plane);
 					});
 				}
@@ -168,7 +160,7 @@ export class Chunk {
 
 		// console.log(`${geometries.length} blocks`);
 		const geometry = mergeGeometries(geometries, true);
-		geometry.computeBoundingSphere();
+		// geometry.computeBoundingSphere();
 		return geometry;
 	}
 
@@ -226,21 +218,11 @@ declare global {
 	type ChunkType = InstanceType<typeof Chunk>;
 }
 
-function setPlaneUv(plane: PlaneGeometry, textureIndex: number): void {
-	const epsilon = 0;
+export function setPlaneUv(plane: PlaneGeometry, textureIndex: number): void {
 	const start = textureRatio * (textureIndex - 1);
 	const end = start + textureRatio;
 
-	const uv = new Float32Array([
-		start + epsilon,
-		1 - epsilon,
-		end - epsilon,
-		1 - epsilon,
-		start + epsilon,
-		epsilon,
-		end - epsilon,
-		epsilon,
-	]);
+	const uv = new Float32Array([start, 1, end, 1, start, 0, end, 0]);
 
 	plane.setAttribute("uv", new BufferAttribute(uv, 2));
 }

@@ -1,4 +1,5 @@
 import { ControllerService } from "../Modules/ControllerService";
+import { CreateBlockDisplay } from "../Modules/CreateBlockDisplay";
 import { Workspace } from "./Workspace";
 
 const defaultHotbar = [0, 1, 2];
@@ -11,12 +12,17 @@ class HotbarController {
 		const LocalPlayerController = ControllerService.GetController("LocalPlayerController");
 
 		this.Slots.forEach((slot, index) => {
+			slot.Div.innerHTML = "";
+
 			if (index === this.SelectedSlotId) {
 				slot.Div.style.backgroundColor = "blue";
 			} else {
 				slot.Div.style.backgroundColor = "red";
 			}
 			slot.Div.textContent = `${slot.Block.Name}`;
+
+			// slot.Div.appendChild(CreateBlockDisplay(slot.Block));
+			slot.Div.style.backgroundImage = `url(${CreateBlockDisplay(slot.Block)})`;
 		});
 
 		console.log("Selected block", this.Slots);
@@ -27,9 +33,9 @@ class HotbarController {
 		await Workspace.WaitForGameLoaded();
 		const LocalPlayerController = ControllerService.GetController("LocalPlayerController");
 		const UiController = ControllerService.GetController("UiController");
-		const inventory = document.getElementById("Inventory") as HTMLDivElement;
+		const hotbar = document.getElementById("hotbar") as HTMLDivElement;
 
-		// Create inventory ui
+		// Create hotbar ui
 		defaultHotbar.forEach((blockId) => {
 			const slot = document.createElement("div");
 			slot.textContent = `blockId: ${blockId}`;
@@ -42,7 +48,7 @@ class HotbarController {
 			};
 
 			this.Slots.push({ Div: slot, Block: blockObject });
-			inventory.appendChild(slot);
+			hotbar.appendChild(slot);
 		});
 
 		// Create blockmenu button
@@ -53,7 +59,7 @@ class HotbarController {
 			LocalPlayerController.Controls.lock();
 		};
 
-		inventory.appendChild(blockMenuButton);
+		hotbar.appendChild(blockMenuButton);
 
 		this.Update();
 
