@@ -15,17 +15,15 @@ class HotbarController {
 			slot.Div.innerHTML = "";
 
 			if (index === this.SelectedSlotId) {
-				slot.Div.style.backgroundColor = "blue";
+				slot.Div.style.outline = "4px solid rgb(211, 211, 211)";
 			} else {
-				slot.Div.style.backgroundColor = "red";
+				slot.Div.style.outline = "#1a1a1a 1px solid";
 			}
 			slot.Div.textContent = `${slot.Block.Name}`;
 
-			// slot.Div.appendChild(CreateBlockDisplay(slot.Block));
 			slot.Div.style.backgroundImage = `url(${CreateBlockDisplay(slot.Block)})`;
 		});
 
-		console.log("Selected block", this.Slots);
 		LocalPlayerController.SelectedBlock = this.Slots[this.SelectedSlotId].Block;
 	}
 

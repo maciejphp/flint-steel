@@ -52,6 +52,9 @@ app.use("/", uploadBlockApi);
 import getFlipbookApi from "./getFlipbookApi.js";
 app.use("/", getFlipbookApi);
 
+import adminApi from "./adminApi.js";
+app.use("/admin", adminApi);
+
 app.get("/", (req, res) => {
 	res.send("Hello World!");
 });

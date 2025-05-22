@@ -96,99 +96,96 @@ export default (): PointerLockControls => {
 
 	RunService.Heartbeat.Connect((delta) => {
 		delta = Math.min(delta, 0.5);
+		velocity.multiplyScalar(1 - Settings.friction * delta); // friction value
+
+		// Step 1: Create direction vector (horizontal only — Y will be added separately if needed)
+		const direction = controls.isLocked
+			? new Vector3(
+					Number(moveRight) - Number(moveLeft),
+					0,
+					Number(moveBackward) - Number(moveForward),
+			  ).normalize()
+			: new Vector3(0, 0, 0);
+
+		// Step 2: Get the camera's yaw (horizontal rotation only)
+		const euler = new Euler(0, 0, 0, "YXZ");
+		euler.setFromQuaternion(controls.object.quaternion);
+		const yaw = new Quaternion().setFromEuler(new Euler(0, euler.y, 0));
+		const movement = direction.applyQuaternion(yaw);
+
 		if (controls.isLocked) {
-			velocity.multiplyScalar(1 - Settings.friction * delta); // friction value
-
-			// Step 1: Create direction vector (horizontal only — Y will be added separately if needed)
-			const direction = new Vector3(
-				Number(moveRight) - Number(moveLeft),
-				0,
-				Number(moveBackward) - Number(moveForward),
-			).normalize();
-
-			// Step 2: Get the camera's yaw (horizontal rotation only)
-			const euler = new Euler(0, 0, 0, "YXZ");
-			euler.setFromQuaternion(controls.object.quaternion);
-			const yaw = new Quaternion().setFromEuler(new Euler(0, euler.y, 0));
-			const movement = direction.applyQuaternion(yaw);
-
 			if (moveUp) direction.y += 1;
 			if (moveDown) direction.y -= 1;
+		}
 
-			velocity.add(movement.multiplyScalar(Settings.speed * delta));
+		velocity.add(movement.multiplyScalar(Settings.speed * delta));
 
-			const newPosition = playerPosition.clone().add(velocity.clone().multiplyScalar(delta));
+		const newPosition = playerPosition.clone().add(velocity.clone().multiplyScalar(delta));
 
-			// Handle collision
-			if (previousPosition) {
-				const distanceTraveled = new Vector3().subVectors(newPosition, playerPosition);
+		// Handle collision
+		if (previousPosition) {
+			const distanceTraveled = new Vector3().subVectors(newPosition, playerPosition);
 
-				// Shoot a raycast in each direction and only allows movement if it doesnt hit anything
-				// Clone current position
-				const tempPosition = playerPosition.clone();
-				const willCollide = (
-					origin: Vector3,
-					direction: Vector3,
-					distance: number,
-					offset: number,
-				): boolean => {
-					const raycaster = new Raycaster(origin, direction.clone().normalize(), 0, distance + offset);
-					const intersects = raycaster.intersectObjects(Workspace.Scene.children, true);
-					return intersects.length > 0;
-				};
+			// Shoot a raycast in each direction and only allows movement if it doesnt hit anything
+			// Clone current position
+			const tempPosition = playerPosition.clone();
+			const willCollide = (origin: Vector3, direction: Vector3, distance: number, offset: number): boolean => {
+				const raycaster = new Raycaster(origin, direction.clone().normalize(), 0, distance + offset);
+				const intersects = raycaster.intersectObjects(Workspace.Scene.children, true);
+				return intersects.length > 0;
+			};
 
-				// Move X
-				const nextX = tempPosition.clone().add(new Vector3(distanceTraveled.x, 0, 0));
-				if (
-					!willCollide(
-						tempPosition,
-						new Vector3(Math.sign(distanceTraveled.x), 0, 0),
-						Math.abs(distanceTraveled.x),
-						halfPlayerWidth,
-					)
-				) {
-					tempPosition.x = nextX.x;
-				} else {
-					velocity.x = 0;
-				}
-
-				// Move Z
-				const nextZ = tempPosition.clone().add(new Vector3(0, 0, distanceTraveled.z));
-				if (
-					!willCollide(
-						tempPosition,
-						new Vector3(0, 0, Math.sign(distanceTraveled.z)),
-						Math.abs(distanceTraveled.z),
-						halfPlayerWidth,
-					)
-				) {
-					tempPosition.z = nextZ.z;
-				} else {
-					velocity.z = 0;
-				}
-
-				const nextY = tempPosition.clone().add(new Vector3(0, distanceTraveled.y, 0));
-				if (
-					!willCollide(
-						tempPosition,
-						new Vector3(0, Math.sign(distanceTraveled.y), 0),
-						Math.abs(distanceTraveled.y),
-						halfPlayerHeight,
-					)
-				) {
-					tempPosition.y = nextY.y;
-				} else {
-					velocity.y = 0;
-				}
-
-				newPosition.copy(tempPosition);
+			// Move X
+			const nextX = tempPosition.clone().add(new Vector3(distanceTraveled.x, 0, 0));
+			if (
+				!willCollide(
+					tempPosition,
+					new Vector3(Math.sign(distanceTraveled.x), 0, 0),
+					Math.abs(distanceTraveled.x),
+					halfPlayerWidth,
+				)
+			) {
+				tempPosition.x = nextX.x;
+			} else {
+				velocity.x = 0;
 			}
 
-			playerPosition.copy(newPosition);
-			controls.object.position.copy(playerPosition.clone().add(LocalPlayerController.CameraOffset));
+			// Move Z
+			const nextZ = tempPosition.clone().add(new Vector3(0, 0, distanceTraveled.z));
+			if (
+				!willCollide(
+					tempPosition,
+					new Vector3(0, 0, Math.sign(distanceTraveled.z)),
+					Math.abs(distanceTraveled.z),
+					halfPlayerWidth,
+				)
+			) {
+				tempPosition.z = nextZ.z;
+			} else {
+				velocity.z = 0;
+			}
 
-			previousPosition = newPosition;
+			const nextY = tempPosition.clone().add(new Vector3(0, distanceTraveled.y, 0));
+			if (
+				!willCollide(
+					tempPosition,
+					new Vector3(0, Math.sign(distanceTraveled.y), 0),
+					Math.abs(distanceTraveled.y),
+					halfPlayerHeight,
+				)
+			) {
+				tempPosition.y = nextY.y;
+			} else {
+				velocity.y = 0;
+			}
+
+			newPosition.copy(tempPosition);
 		}
+
+		playerPosition.copy(newPosition);
+		controls.object.position.copy(playerPosition.clone().add(LocalPlayerController.CameraOffset));
+
+		previousPosition = newPosition;
 	});
 
 	return controls;

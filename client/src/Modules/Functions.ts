@@ -66,10 +66,6 @@ export const handleResponse = (response: AxiosResponse): boolean => {
 		console.warn(response.data.error);
 	}
 
-	if (response.data.auth !== undefined && !response.data.auth) {
-		localStorage.removeItem("user");
-		window.location.href = "/login";
-	}
 	return success;
 };
 

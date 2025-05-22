@@ -48,15 +48,18 @@ class Class {
 		return Buffer.from(base64Data, "base64");
 	}
 
-	async UploadTexture(req: express.Request, res: express.Response) {
+	async UploadTexture(req: express.Request, res: express.Response, Id?: number) {
 		try {
 			const buffer = this.CreateBuffer(req.body.Image);
 			const newImage = (await loadImage(buffer)) as unknown as HTMLImageElement;
 
-			const imageData = this.Ctx.getImageData(0, 0, this.Canvas.width, this.Canvas.height);
-			this.Canvas.width += imageSize;
-			this.Ctx = this.Canvas.getContext("2d") as unknown as CanvasRenderingContext2D;
-			this.Ctx.putImageData(imageData, 0, 0);
+			// Expand canvas if not overwriting an existing image
+			if (!Id) {
+				const imageData = this.Ctx.getImageData(0, 0, this.Canvas.width, this.Canvas.height);
+				this.Canvas.width += imageSize;
+				this.Ctx = this.Canvas.getContext("2d") as unknown as CanvasRenderingContext2D;
+				this.Ctx.putImageData(imageData, 0, 0);
+			}
 
 			// Check file size (max: 20KB for example)
 			if (buffer.length > 20 * 1024) {
@@ -73,16 +76,14 @@ class Class {
 				}
 			}
 
-			this.Ctx.drawImage(newImage, this.Canvas.width - imageSize, 0, imageSize, imageSize);
+			const imagePixelOffset = Id ? (Id - 1) * imageSize : this.Canvas.width - imageSize;
+			this.Ctx.drawImage(newImage, imagePixelOffset, 0, imageSize, imageSize);
 
 			// fs.writeFileSync("flipbook.png", this.Canvas.toBuffer("image/png"));
 
-			// Save to database
-			const [, success] = await query(
-				`INSERT INTO blocks (Name, Data)
-				VALUES (?, ?);`,
-				[req.body.Name, buffer],
-			);
+			const [, success] = Id
+				? await query(`UPDATE blocks SET Data = ? WHERE Id = ?;`, [buffer as unknown as string, Id])
+				: await query(`INSERT INTO blocks (Name, Data) VALUES (?, ?);`, [req.body.Name, buffer]);
 
 			if (success) {
 				res.json({ message: "Image uploaded successfully" });

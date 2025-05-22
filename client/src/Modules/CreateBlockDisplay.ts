@@ -1,4 +1,13 @@
-import { Material, Mesh, MeshBasicMaterial, PerspectiveCamera, PlaneGeometry, Scene, WebGLRenderer } from "three";
+import {
+	DirectionalLight,
+	Material,
+	Mesh,
+	MeshPhongMaterial,
+	PerspectiveCamera,
+	PlaneGeometry,
+	Scene,
+	WebGLRenderer,
+} from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { setPlaneUv } from "./Terrain/Chunk";
 import { Workspace } from "../Controllers/Workspace";
@@ -19,13 +28,17 @@ const planePrehabs = {
 	pz: new PlaneGeometry(1, 1).translate(0, 0, 0.5),
 };
 
+const fillLight = new DirectionalLight(0xffffff, 2);
+fillLight.position.set(-0.3, 1, 1.3);
+scene.add(fillLight);
+
 const camera = new PerspectiveCamera(35, 1, 0.1, 100);
 
 camera.position.set(0, 0, 4);
 
 let material: Material;
 Workspace.WaitForGameLoaded().then(() => {
-	material = new MeshBasicMaterial({ map: Workspace.Texture });
+	material = new MeshPhongMaterial({ map: Workspace.Texture });
 });
 
 export const CreateBlockDisplay = (block: Block): string => {
