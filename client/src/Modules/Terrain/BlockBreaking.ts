@@ -71,7 +71,7 @@ export default (): void => {
 		}
 	}
 
-	const blockUpdateDelay = 100;
+	const blockUpdateDelay = 150;
 	let lastBlockUpdate = 0;
 
 	let leftButtonDown = false;
@@ -96,12 +96,14 @@ export default (): void => {
 
 		switch (e.button) {
 			case 0: // Left button clicked.
-				leftButtonDown = true;
 				breakBlock();
+				lastBlockUpdate = Date.now();
+				leftButtonDown = true;
 				break;
 			case 2: // Right button clicked
-				rightButtonDown = true;
 				placeBlock();
+				lastBlockUpdate = Date.now();
+				rightButtonDown = true;
 				break;
 		}
 	});
