@@ -1,8 +1,10 @@
 import { CubeTextureLoader, DirectionalLight } from "three";
 import { Workspace } from "../Controllers/Workspace";
-import { WorldController } from "../Controllers/WorldController";
+import { ControllerService } from "../Modules/ControllerService";
 
 export default (): void => {
+	const WorldController = ControllerService.GetController("WorldController");
+
 	const scene = Workspace.Scene;
 	WorldController.Start();
 

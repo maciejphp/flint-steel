@@ -1,9 +1,11 @@
-import { getChunkId } from "../Functions";
+import { getChunkId, idToPosition } from "../Functions";
 import { Chunk } from "./Chunk";
 import { Vector3 } from "three";
-import "./BlockBreaking";
 import { RunService } from "../../Controllers/RunService";
 import { ServerController } from "../../Controllers/ServerController";
+import { Settings } from "../Settings";
+
+const { ChunkBlockWidth } = Settings;
 
 export class World {
 	LoadedChunks = new Map<string, Chunk>();
@@ -44,9 +46,48 @@ export class World {
 			});
 		}, 1000);
 
-		// Handle block breaking & breaaking
-		ServerController.Socket.on("updateBlock", (data) => {
-			this.LoadedChunks.get(data.ChunkId)?.UpdateBlockFromPositionId(data.PositionId, data.BlockId);
+		// Handle block breaking & breaking
+		ServerController.Socket.on(
+			"updateBlock",
+			(data: { ChunkPosition: { x: number; z: number }; PositionId: number; BlockId: number }[]) => {
+				this.UpdateBlocks(
+					data.map((blockData) => {
+						const { ChunkPosition, PositionId, BlockId } = blockData;
+						return {
+							ChunkPosition: new Vector3(ChunkPosition.x, 0, ChunkPosition.z),
+							PositionId,
+							BlockId,
+						};
+					}),
+				);
+			},
+		);
+	}
+
+	UpdateBlocks(blocks: { ChunkPosition: Vector3; PositionId: number; BlockId: number }[]): void {
+		const updatedChunks = new Map<Chunk, Vector3>();
+
+		blocks.forEach((blockData) => {
+			const { ChunkPosition, PositionId, BlockId } = blockData;
+			const chunk = this.LoadedChunks.get(getChunkId(ChunkPosition.x, ChunkPosition.z));
+			if (chunk) {
+				chunk.blocks[PositionId] = BlockId;
+				updatedChunks.set(chunk, idToPosition(PositionId));
+			}
+		});
+
+		console.log("chunks:", updatedChunks.size, "blocks:", blocks.length);
+
+		updatedChunks.forEach((ChunkBlockPosition, Chunk) => {
+			if (!Chunk.mesh) return;
+			Chunk.Generate();
+
+			if (ChunkBlockPosition.x === 0 && Chunk.chunkLeft?.generated) Chunk.chunkLeft.Generate();
+			else if (ChunkBlockPosition.x === ChunkBlockWidth - 1 && Chunk.chunkRight?.generated)
+				Chunk.chunkRight.Generate();
+			if (ChunkBlockPosition.z === 0 && Chunk.chunkBack?.generated) Chunk.chunkBack.Generate();
+			else if (ChunkBlockPosition.z === ChunkBlockWidth - 1 && Chunk.chunkFront?.generated)
+				Chunk.chunkFront.Generate();
 		});
 	}
 

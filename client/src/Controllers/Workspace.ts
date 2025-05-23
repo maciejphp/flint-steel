@@ -73,6 +73,7 @@ class Class {
 			const success = handleResponse(response);
 			if (!success) return;
 			this.Blocks = response.data as Block[];
+			this.Blocks.sort((a, b) => (a.Uses > b.Uses ? -1 : 1));
 			this.CheckIfGameLoaded();
 		});
 	}

@@ -9,6 +9,7 @@ class Class {
 	private static instance: Class;
 	private noise = createNoise3D(Alea("seed"));
 
+	BlockUses: Record<number, number> = {};
 	LoadedChunks: Record<string, Chunk> = {};
 	ModifiedChunks: Record<string, Chunk> = {};
 
@@ -17,12 +18,14 @@ class Class {
 
 	private constructor() {
 		const saveWorld = async () => {
+			console.log("Saving world...");
 			if (this.isSaving || Object.keys(this.ModifiedChunks).length === 0) return;
 
 			this.isSaving = true;
 			this.saveQueue = { ...this.ModifiedChunks };
 			this.ModifiedChunks = {};
 
+			// Create a query to insert all modified chunks
 			let insertQueries = "";
 			Object.entries(this.saveQueue).forEach(([chunkId, chunk]) => {
 				// Create a deep copy of the chunk data to prevent reference issues
@@ -33,15 +36,42 @@ class Class {
 				`;
 			});
 
-			try {
-				await query(insertQueries, []);
-				console.log("Saved chunks:", Object.keys(this.saveQueue).length);
+			// Create a query to store the block uses
+			function generateUpdateSQL(): string {
+				const cases: string[] = [];
+				const ids: string[] = [];
 
-				// Only unload chunks that aren't modified since we started saving
-				Object.keys(this.saveQueue).forEach((chunkId) => {
-					if (!this.ModifiedChunks[chunkId]) {
-						delete this.LoadedChunks[chunkId];
-					}
+				for (const [id, value] of Object.entries(WorldService.BlockUses)) {
+					cases.push(`WHEN ${id} THEN ${value}`);
+					ids.push(id);
+				}
+
+				const caseStatement = cases.join("\n    ");
+				const idList = ids.join(", ");
+
+				const sql = `
+					UPDATE blocks
+					SET Uses = CASE Id
+						${caseStatement}
+					END
+					WHERE Id IN (${idList});
+						`.trim();
+
+				return sql;
+			}
+
+			try {
+				query(insertQueries, []).then(() => {
+					// Only unload chunks that aren't modified since we started saving
+					Object.keys(this.saveQueue).forEach((chunkId) => {
+						if (!this.ModifiedChunks[chunkId]) {
+							delete this.LoadedChunks[chunkId];
+						}
+					});
+				});
+
+				query(generateUpdateSQL(), []).then(() => {
+					this.BlockUses = {};
 				});
 			} catch (error) {
 				// If save fails, add chunks back to ModifiedChunks
@@ -56,7 +86,6 @@ class Class {
 			this.isSaving = false;
 		};
 
-		// Auto save more frequently to reduce data loss risk
 		setInterval(() => {
 			saveWorld();
 		}, 60 * 1000);

@@ -69,25 +69,40 @@ app.get("/backup", async (req, res) => {
 // });
 
 io.on("connection", (socket) => {
-	socket.on("updateBlock", async (data: { ChunkPosition: Vector2; PositionId: number; BlockId: number }) => {
-		const { ChunkPosition, PositionId, BlockId } = data;
-		const chunk = await WorldService.GetChunk(ChunkPosition);
+	socket.on("updateBlock", async (data: { ChunkPosition: Vector2; PositionId: number; BlockId: number }[]) => {
+		console.log("updateBlock", data.length);
+		data.forEach(async (blockData, index) => {
+			const { ChunkPosition, PositionId, BlockId } = blockData;
+			const chunk = await WorldService.GetChunk(ChunkPosition);
+			console.log(PositionId, index);
 
-		if (chunk && chunk[PositionId] !== undefined) {
-			const chunkId = getChunkId(ChunkPosition.x, ChunkPosition.z);
+			if (chunk && chunk[PositionId] !== undefined) {
+				const chunkId = getChunkId(ChunkPosition.x, ChunkPosition.z);
 
-			// Create a deep copy of the chunk before modification
-			const updatedChunk = [...chunk];
-			updatedChunk[PositionId] = BlockId;
+				// Store the uses of the block in the database
+				if (chunk[PositionId] === 0) {
+					// placing a block
+					WorldService.BlockUses[BlockId] = (WorldService.BlockUses[BlockId] || 0) + 1;
+				} else {
+					// removing a block
+					const brokenBlockId = chunk[PositionId];
+					if (brokenBlockId > 2) {
+						// Only remove the block if it's not air or a natural block
+						WorldService.BlockUses[chunk[PositionId]] = Math.max(
+							(WorldService.BlockUses[chunk[PositionId]] || 0) - 1,
+							0,
+						);
+					}
+				}
 
-			// Update both LoadedChunks and ModifiedChunks
-			WorldService.LoadedChunks[chunkId] = updatedChunk;
-			WorldService.ModifiedChunks[chunkId] = updatedChunk;
-
-			io.emit("updateBlock", { ChunkId: chunkId, PositionId, BlockId });
-		} else {
-			console.warn("Invalid chunk or position:", ChunkPosition, PositionId);
-		}
+				chunk[PositionId] = BlockId;
+				WorldService.LoadedChunks[chunkId] = chunk;
+				WorldService.ModifiedChunks[chunkId] = chunk;
+			} else {
+				console.warn("Invalid chunk or position:", ChunkPosition, PositionId);
+			}
+		});
+		io.emit("updateBlock", data);
 	});
 
 	console.log("a user connected");

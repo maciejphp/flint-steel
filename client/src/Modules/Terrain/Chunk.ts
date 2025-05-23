@@ -1,4 +1,4 @@
-import { getWorldBlockPosition, idToPosition, xyzToId } from "../Functions";
+import { getWorldBlockPosition, xyzToId } from "../Functions";
 import { Settings } from "../Settings";
 import {
 	Vector3,
@@ -57,23 +57,6 @@ export class Chunk {
 	constructor(chunkPosition: Vector3) {
 		this.chunkPosition = chunkPosition;
 	}
-
-	//
-
-	UpdateBlockFromPositionId(positionId: number, blockId: number): void {
-		const chunkBlockPosition = idToPosition(positionId);
-		this.blocks[positionId] = blockId;
-
-		if (!this.mesh) return;
-		this.Generate();
-
-		if (chunkBlockPosition.x === 0 && this.chunkLeft?.generated) this.chunkLeft.Generate();
-		else if (chunkBlockPosition.x === ChunkBlockWidth - 1 && this.chunkRight?.generated) this.chunkRight.Generate();
-		if (chunkBlockPosition.z === 0 && this.chunkBack?.generated) this.chunkBack.Generate();
-		else if (chunkBlockPosition.z === ChunkBlockWidth - 1 && this.chunkFront?.generated) this.chunkFront.Generate();
-	}
-
-	//
 
 	private GenerateGeometry(): BufferGeometry | undefined {
 		const geometries: PlaneGeometry[] = [];
