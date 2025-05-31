@@ -1,11 +1,11 @@
-import { Workspace } from "../Controllers/Workspace";
 import { PointerLockControls } from "three/addons/controls/PointerLockControls.js";
-import { RunService } from "../Controllers/RunService";
 import { Euler, Quaternion, Raycaster, Vector3 } from "three";
 import { ControllerService } from "./ControllerService";
+import { Workspace } from "../Controllers/Workspace";
 
 export default (): PointerLockControls => {
-	const LocalPlayerController = ControllerService.GetController("LocalPlayerController");
+	const LocalPlayerController = ControllerService.Get("LocalPlayerController");
+	const RunService = ControllerService.Get("RunService");
 
 	const controls = new PointerLockControls(Workspace.Camera, document.body);
 	let moveForward = false;

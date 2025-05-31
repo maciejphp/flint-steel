@@ -29,8 +29,8 @@ class Class {
 
 		this.Canvas = createCanvas(blocks.length * imageSize, imageSize);
 		// this.Canvas = createCanvas(imageSize, imageSize);
-		// console.log("Total images in flipbook:", this.Canvas.width / imageSize);
-		console.log("Total images in flipbook:", blocks.length);
+		// console.log("Total images in atlasTexture:", this.Canvas.width / imageSize);
+		console.log("Total images in atlasTexture:", blocks.length);
 
 		this.Ctx = this.Canvas.getContext("2d") as unknown as CanvasRenderingContext2D;
 
@@ -79,7 +79,7 @@ class Class {
 			const imagePixelOffset = Id ? (Id - 1) * imageSize : this.Canvas.width - imageSize;
 			this.Ctx.drawImage(newImage, imagePixelOffset, 0, imageSize, imageSize);
 
-			// fs.writeFileSync("flipbook.png", this.Canvas.toBuffer("image/png"));
+			// fs.writeFileSync("atlasTexture.png", this.Canvas.toBuffer("image/png"));
 
 			const [, success] = Id
 				? await query(`UPDATE blocks SET Data = ? WHERE Id = ?;`, [buffer as unknown as string, Id])

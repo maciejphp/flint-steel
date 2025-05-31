@@ -1,7 +1,6 @@
 import Stats from "three/addons/libs/stats.module.js";
 import load3dNoise from "./Worlds/3dNoise";
 import { ControllerService } from "./Modules/ControllerService";
-import { RunService } from "./Controllers/RunService";
 
 // Auto-import all controllers during build
 const modules = import.meta.glob("/src/Controllers/*.ts", { eager: true });
@@ -13,7 +12,7 @@ import.meta.glob("/src/Ui/*.ts", { eager: true });
 Promise.all(Object.values(modules)).then(async () => {
 	// After all controllers are registered, call Init on each
 	for (const name of ControllerService.GetControllerNames()) {
-		const controller = ControllerService.GetController(name);
+		const controller = ControllerService.Get(name);
 
 		// Only call Init if it exists
 		if (typeof controller.Init === "function") {
@@ -21,7 +20,7 @@ Promise.all(Object.values(modules)).then(async () => {
 		}
 	}
 
-	const LocalPlayerController = ControllerService.GetController("LocalPlayerController");
+	const RunService = ControllerService.Get("RunService");
 
 	const stats = new Stats();
 
@@ -31,8 +30,6 @@ Promise.all(Object.values(modules)).then(async () => {
 	RunService.Heartbeat.Connect(() => {
 		stats.update();
 	});
-
-	LocalPlayerController.Fly = true;
 
 	load3dNoise();
 });

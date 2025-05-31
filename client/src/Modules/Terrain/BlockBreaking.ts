@@ -1,13 +1,14 @@
 import { Raycaster, Vector2, Vector3 } from "three";
-import { Workspace } from "../../Controllers/Workspace";
-import { ServerController } from "../../Controllers/ServerController";
 import { getChunkBlockPosition, getChunkId, getChunkPosition, positionToId } from "../Functions";
 import { ControllerService } from "../ControllerService";
-import { RunService } from "../../Controllers/RunService";
+import { Workspace } from "../../Controllers/Workspace";
 
 export default (): void => {
-	const LocalPlayerController = ControllerService.GetController("LocalPlayerController");
-	const WorldController = ControllerService.GetController("WorldController");
+	const ServerController = ControllerService.Get("ServerController");
+	const HotbarController = ControllerService.Get("HotbarController");
+	const WorldController = ControllerService.Get("WorldController");
+	const LocalPlayerController = ControllerService.Get("LocalPlayerController");
+	const RunService = ControllerService.Get("RunService");
 
 	const raycaster = new Raycaster();
 
@@ -47,7 +48,7 @@ export default (): void => {
 		if (ray && ray.distance < 8) {
 			if (!ray.normal) return;
 			let blockPosition = ray.point.add(ray.normal.multiplyScalar(0.5));
-			const block = LocalPlayerController.SelectedBlock;
+			const block = HotbarController.SelectedBlock;
 
 			blockPosition = new Vector3(
 				Math.round(blockPosition.x),

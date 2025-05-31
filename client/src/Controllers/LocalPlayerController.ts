@@ -1,15 +1,12 @@
 import { PointerLockControls } from "three/examples/jsm/Addons.js";
-import GravityMode from "../Modules/FirstPersonControls";
 import FlyMode from "../Modules/FlyControls";
 import { Matrix4, Vector3 } from "three";
 import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 import { ControllerService } from "../Modules/ControllerService";
-import { RunService } from "./RunService";
 
 class LocalPlayerController {
 	Controls!: PointerLockControls;
 	Gui = new GUI({ title: "Settings" });
-	SelectedBlock!: Block;
 
 	PlayerHeight = 0.99;
 	PlayerWidth = 0.5;
@@ -17,14 +14,10 @@ class LocalPlayerController {
 	PlayerPosition = new Vector3();
 	CameraOffset = new Vector3(0, 0.3, 0);
 
-	Fly = true;
-
 	async Init() {
-		if (this.Fly) {
-			this.Controls = FlyMode();
-		} else {
-			this.Controls = GravityMode();
-		}
+		const RunService = ControllerService.Get("RunService");
+
+		this.Controls = FlyMode();
 
 		//save player position
 		const savePlayerPosition = () => {

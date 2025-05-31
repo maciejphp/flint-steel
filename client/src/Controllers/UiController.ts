@@ -1,7 +1,7 @@
 import { ControllerService } from "../Modules/ControllerService";
 import { Signal } from "../Utils/Signal";
 
-const LocalPlayerController = ControllerService.GetController("LocalPlayerController");
+const LocalPlayerController = ControllerService.Get("LocalPlayerController");
 
 class UiController {
 	ToggleBlockUpload = new Signal<boolean>();

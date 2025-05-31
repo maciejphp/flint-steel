@@ -2,20 +2,20 @@
 import { io, Socket } from "socket.io-client";
 import { Settings } from "../Modules/Settings";
 import { Vector3 } from "three";
-import { getChunkBlockPosition, getChunkPosition, handleResponse, positionToId } from "../Modules/Functions";
-import api from "../Modules/axiosConfig";
-import { RunService } from "./RunService";
+import { getChunkBlockPosition, getChunkPosition, positionToId, postRequest } from "../Modules/Functions";
+import { ControllerService } from "../Modules/ControllerService";
 
 const blockUpdateDelay = 500; // 500ms
 let lastBlockUpdate = 0;
 
-class Class {
-	private static instance: Class;
-	Socket: Socket;
+class ServerController {
+	Socket!: Socket;
 	Connected = false;
 	BlockUpdateQueue = new Map<Vector3, number>();
 
-	constructor() {
+	async Init() {
+		const RunService = ControllerService.Get("RunService");
+
 		this.Socket = io(Settings.server, {
 			withCredentials: true,
 		});
@@ -45,55 +45,58 @@ class Class {
 
 			if (blockUpdateData.length > 0) {
 				this.Socket.emit("updateBlock", blockUpdateData);
-				console.log(blockUpdateData);
 				this.BlockUpdateQueue.clear();
 			}
 		});
 	}
 
-	async UpdateBlock(blockPosition: Vector3, blockId: number) {
+	UpdateBlock(blockPosition: Vector3, blockId: number) {
 		this.BlockUpdateQueue.set(blockPosition, blockId);
-		// const chunkPosition = getChunkPosition(blockPosition.clone());
-
-		// this.Socket.emit("updateBlock", {
-		// 	ChunkPosition: { x: chunkPosition.x, z: chunkPosition.z },
-		// 	PositionId: positionToId(getChunkBlockPosition(blockPosition.clone(), chunkPosition.clone())),
-		// 	BlockId: blockId,
-		// });
 	}
 
 	async GetChunkData(chunkPositions: Vector3[]): Promise<[Record<string, number[]>, boolean]> {
 		document.getElementById("loading-screen-message")!.innerHTML += "<p>Loading chunks...</p>";
-		const response = await api.post("/world/getChunks", {
-			ChunkPositions: chunkPositions.map((chunk) => {
-				return {
-					x: chunk.x,
-					z: chunk.z,
-				};
-			}),
-		});
-		const success = handleResponse(response);
-		response.data.ChunkData as number[][];
+
+		const chunkData = await postRequest<Record<string, number[]>, { ChunkPositions: { x: number; z: number }[] }>(
+			"/world/getChunks",
+			{
+				ChunkPositions: chunkPositions.map((chunk) => {
+					return {
+						x: chunk.x,
+						z: chunk.z,
+					};
+				}),
+			},
+		);
+
 		document.getElementById("loading-screen")!.style.display = "none";
-		return [response.data.ChunkData, success];
+		return [chunkData, true];
 	}
 
 	async UploadBlock(data: string, name: string): Promise<[string, boolean]> {
 		if (name === "") return ["Name is empty", false];
 
 		document.getElementById("loading-screen-message")!.innerHTML += "<p>Loading chunks...</p>";
-		const response = await api.post("/uploadBlock", { Image: data, Name: name });
-		const success = handleResponse(response);
-		response.data.Error as number[][];
-		return [response.data.Error, success];
-	}
 
-	public static get(): Class {
-		if (!Class.instance) {
-			Class.instance = new Class();
-		}
-		return Class.instance;
+		return new Promise<[string, boolean]>((resolve) => {
+			postRequest<number[][], { Image: string; Name: string }>("/uploadBlock", {
+				Image: data,
+				Name: name,
+			})
+				.then(() => {
+					resolve(["", true]);
+				})
+				.catch((error) => {
+					resolve([error, false]);
+				});
+		});
 	}
 }
 
-export const ServerController = Class.get();
+ControllerService.Register("ServerController", ServerController);
+
+declare global {
+	interface ControllerConstructors {
+		ServerController: typeof ServerController;
+	}
+}

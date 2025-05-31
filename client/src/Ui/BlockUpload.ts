@@ -1,7 +1,7 @@
-import { ServerController } from "../Controllers/ServerController";
 import { ControllerService } from "../Modules/ControllerService";
 
-const UiController = ControllerService.GetController("UiController");
+const UiController = ControllerService.Get("UiController");
+const ServerController = ControllerService.Get("ServerController");
 
 UiController.ToggleBlockUpload.Connect((open) => {
 	const blockMenu = document.getElementById("block-upload") as HTMLDivElement;
@@ -21,7 +21,6 @@ const nameInput = document.getElementById("block-upload-name-input") as HTMLInpu
 const imageInput = document.getElementById("block-upload-upload") as HTMLInputElement;
 const uploadButton = document.getElementById("block-upload-button") as HTMLImageElement;
 const canvas = document.getElementById("block-upload-canvas") as HTMLCanvasElement;
-console.log(canvas);
 const ctx = canvas.getContext("2d");
 if (!ctx) throw new Error("Could not get canvas context");
 
@@ -85,7 +84,20 @@ if (imageInput.files) {
 }
 
 uploadButton.addEventListener("click", () => {
-	if (!imageData) return;
+	if (!imageData) {
+		alert("Please select an image to upload.");
+		return;
+	}
+
+	if (nameInput.value.trim() === "") {
+		alert("Please enter a name for the block.");
+		return;
+	}
+
+	if (nameInput.value.length > 15) {
+		alert("Block name is too long. Please use a name with 15 characters or less.");
+		return;
+	}
 
 	console.log(imageInput.files);
 

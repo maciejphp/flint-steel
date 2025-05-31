@@ -6,7 +6,6 @@ const router = express.Router();
 
 router.post("/overwriteBlock", (req, res) => {
 	const { BlockId, Password } = req.body;
-	console.log(BlockId);
 	if (!BlockId) {
 		res.json({ error: "BlockId is required" });
 		return;

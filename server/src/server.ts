@@ -1,42 +1,10 @@
 import express from "express";
-import cors from "cors";
 import dotenv from "dotenv";
-import http from "http";
-import { Server as SocketIO } from "socket.io";
-
-const allowedOrigins = ["http://localhost:5173", "http://localhost:5174", "https://flint-steel.vercel.app"];
 
 dotenv.config();
-const app = express();
-const port = 3000;
-const server = http.createServer(app);
-const io = new SocketIO(server, {
-	cors: {
-		origin: function (origin, callback) {
-			// Allow requests with no origin (like curl or mobile apps)
-			if (!origin || allowedOrigins.includes(origin)) {
-				callback(null, true);
-			} else {
-				callback(new Error(`CORS not allowed origin: ${origin}`));
-			}
-		},
-		credentials: true,
-	},
-});
 
-app.use(
-	cors({
-		origin: function (origin, callback) {
-			// Allow requests with no origin (like curl or mobile apps)
-			if (!origin || allowedOrigins.includes(origin)) {
-				callback(null, true);
-			} else {
-				callback(new Error(`CORS not allowed origin: ${origin}`));
-			}
-		},
-		credentials: true,
-	}),
-);
+const app = ServerService.App;
+const io = ServerService.Io;
 
 app.set("trust proxy", 1);
 app.use(express.json());
@@ -49,10 +17,11 @@ app.use("/world", worldApi);
 import uploadBlockApi from "./uploadBlockApi.js";
 app.use("/", uploadBlockApi);
 
-import getFlipbookApi from "./getFlipbookApi.js";
-app.use("/", getFlipbookApi);
+import getatlasTextureApi from "./getatlasTextureApi.js";
+app.use("/", getatlasTextureApi);
 
 import adminApi from "./adminApi.js";
+import { ServerService } from "./Services/ServerService.js";
 app.use("/admin", adminApi);
 
 app.get("/", (req, res) => {
@@ -88,10 +57,7 @@ io.on("connection", (socket) => {
 					const brokenBlockId = chunk[PositionId];
 					if (brokenBlockId > 2) {
 						// Only remove the block if it's not air or a natural block
-						WorldService.BlockUses[chunk[PositionId]] = Math.max(
-							(WorldService.BlockUses[chunk[PositionId]] || 0) - 1,
-							0,
-						);
+						WorldService.BlockUses[chunk[PositionId]] -= 1;
 					}
 				}
 
@@ -109,9 +75,4 @@ io.on("connection", (socket) => {
 	socket.on("disconnect", () => {
 		console.log("user disconnected");
 	});
-});
-
-// Ensure the server listens on the correct port
-server.listen(port, () => {
-	console.log(`Server running on http://localhost:${port}`);
 });

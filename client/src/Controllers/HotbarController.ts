@@ -2,14 +2,16 @@ import { ControllerService } from "../Modules/ControllerService";
 import { CreateBlockDisplay } from "../Modules/CreateBlockDisplay";
 import { Workspace } from "./Workspace";
 
-const defaultHotbar = [0, 1, 2];
+const defaultHotbar = [0, 1, 2, 3, 4];
 
 class HotbarController {
+	private Created = false;
 	Slots: { Div: HTMLDivElement; Block: Block }[] = [];
 	SelectedSlotId = 0;
+	SelectedBlock!: Block;
 
 	Update() {
-		const LocalPlayerController = ControllerService.GetController("LocalPlayerController");
+		if (!this.Created) this.SetupHotbar();
 
 		this.Slots.forEach((slot, index) => {
 			slot.Div.innerHTML = "";
@@ -24,13 +26,16 @@ class HotbarController {
 			slot.Div.style.backgroundImage = `url(${CreateBlockDisplay(slot.Block)})`;
 		});
 
-		LocalPlayerController.SelectedBlock = this.Slots[this.SelectedSlotId].Block;
+		this.SelectedBlock = this.Slots[this.SelectedSlotId].Block;
 	}
 
-	async Init() {
-		await Workspace.WaitForGameLoaded();
-		const LocalPlayerController = ControllerService.GetController("LocalPlayerController");
-		const UiController = ControllerService.GetController("UiController");
+	// eslint-disable-next-line @typescript-eslint/no-empty-function
+	async Init() {}
+
+	SetupHotbar() {
+		this.Created = true;
+		const LocalPlayerController = ControllerService.Get("LocalPlayerController");
+		const UiController = ControllerService.Get("UiController");
 		const hotbar = document.getElementById("hotbar") as HTMLDivElement;
 
 		// Create hotbar ui
@@ -41,7 +46,7 @@ class HotbarController {
 			const blockObject = Workspace.Blocks[blockId];
 
 			slot.onclick = () => {
-				LocalPlayerController.SelectedBlock = blockObject;
+				this.SelectedBlock = blockObject;
 				this.Update();
 			};
 
@@ -51,7 +56,7 @@ class HotbarController {
 
 		// Create blockmenu button
 		const blockMenuButton = document.createElement("div");
-		blockMenuButton.textContent = `(e) Block Menu`;
+		blockMenuButton.innerHTML = `Block Menu<br>(e)`;
 
 		blockMenuButton.onclick = () => {
 			LocalPlayerController.Controls.lock();

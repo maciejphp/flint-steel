@@ -42,7 +42,7 @@ class Class {
 				const ids: string[] = [];
 
 				for (const [id, value] of Object.entries(WorldService.BlockUses)) {
-					cases.push(`WHEN ${id} THEN ${value}`);
+					cases.push(`WHEN ${id} THEN Uses + ${value}`);
 					ids.push(id);
 				}
 
@@ -88,7 +88,7 @@ class Class {
 
 		setInterval(() => {
 			saveWorld();
-		}, 60 * 1000);
+		}, 30 * 1000);
 
 		// process.on("SIGINT", saveWorld);
 		// process.on("SIGTERM", saveWorld);

@@ -1,9 +1,8 @@
 import { getChunkId, idToPosition } from "../Functions";
 import { Chunk } from "./Chunk";
 import { Vector3 } from "three";
-import { RunService } from "../../Controllers/RunService";
-import { ServerController } from "../../Controllers/ServerController";
 import { Settings } from "../Settings";
+import { ControllerService } from "../ControllerService";
 
 const { ChunkBlockWidth } = Settings;
 
@@ -12,8 +11,13 @@ export class World {
 	ChunkFetchQueue: Chunk[] = [];
 	ChunkGenerateQueue: Chunk[] = [];
 	ChunksThatAreGettingFetched = new Set<Chunk>();
+	TextureSettings: TextureSettings;
 
-	constructor() {
+	constructor(textureSettings: TextureSettings) {
+		const ServerController = ControllerService.Get("ServerController");
+		const RunService = ControllerService.Get("RunService");
+		this.TextureSettings = textureSettings;
+
 		// Render 1 chunk at a time
 		RunService.Heartbeat.Connect(async () => {
 			this.ChunkGenerateQueue.shift()?.Generate();
@@ -24,19 +28,15 @@ export class World {
 			// Fetch chunks
 			if (this.ChunkFetchQueue.length === 0) return;
 
-			console.log("Fetching chunks", this.ChunkFetchQueue.length);
-
 			this.ChunkFetchQueue.forEach((chunk) => this.ChunksThatAreGettingFetched.add(chunk));
 			const chunkPositions = this.ChunkFetchQueue.map((chunk) => chunk.chunkPosition);
 			this.ChunkFetchQueue = [];
 
-			const fetchTime = Date.now();
 			const [chunkData, success] = await ServerController.GetChunkData(chunkPositions);
 			if (!success) {
 				console.warn("Failed to fetch chunk data");
 				return;
 			}
-			console.log(`Chunk fetch time: ${Date.now() - fetchTime}`);
 
 			Object.entries(chunkData).forEach(([key, value]) => {
 				const chunk = this.LoadedChunks.get(key);
@@ -94,7 +94,7 @@ export class World {
 	LoadChunk(position: Vector3): Chunk {
 		// Create new "ghost" chunks
 		// if (this.ChunkFetchQueue.length > Settings.MaxChunksInFetchQueue)
-		const chunk = new Chunk(position);
+		const chunk = new Chunk(position, this);
 		this.LoadedChunks.set(getChunkId(position.x, position.z), chunk);
 		this.ChunkFetchQueue.push(chunk);
 		chunk.insideFetchQueue = true;
@@ -133,4 +133,8 @@ export class World {
 		this.LoadedChunks.delete(getChunkId(chunk.chunkPosition.x, chunk.chunkPosition.z));
 		chunk.Destroy();
 	}
+}
+
+declare global {
+	type World = InstanceType<typeof World>;
 }

@@ -1,31 +1,11 @@
+import { Workspace } from "../../Controllers/Workspace";
 import { getWorldBlockPosition, xyzToId } from "../Functions";
 import { Settings } from "../Settings";
-import {
-	Vector3,
-	Mesh,
-	Matrix4,
-	PlaneGeometry,
-	BufferGeometry,
-	BufferAttribute,
-	Material,
-	MeshPhongMaterial,
-} from "three";
+import { Vector3, Mesh, Matrix4, PlaneGeometry, BufferGeometry, BufferAttribute } from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { Workspace } from "../../Controllers/Workspace";
 
 const { ChunkBlockWidth, ChunkBlockHeight } = Settings;
 const halfPi = Math.PI / 2;
-
-let material: Material;
-let textureRatio: number;
-
-Workspace.WaitForGameLoaded().then(() => {
-	console.log(Workspace);
-	const image = Workspace.AtlasTexture;
-	material = new MeshPhongMaterial({ map: Workspace.Texture });
-
-	textureRatio = 1 / (image.width / image.height);
-});
 
 const planePrehabs = {
 	px: new PlaneGeometry(1, 1).rotateY(halfPi).translate(0.5, 0, 0),
@@ -53,9 +33,11 @@ export class Chunk {
 	fetched = false;
 	insideFetchQueue = false;
 	insideGenerateQueue = false;
+	world: World;
 
-	constructor(chunkPosition: Vector3) {
+	constructor(chunkPosition: Vector3, world: World) {
 		this.chunkPosition = chunkPosition;
+		this.world = world;
 	}
 
 	private GenerateGeometry(): BufferGeometry | undefined {
@@ -132,7 +114,7 @@ export class Chunk {
 						//     ? 1
 						//     : 0;
 
-						setPlaneUv(plane, blockId);
+						setPlaneUv(plane, blockId, this.world.TextureSettings.TextureRatio);
 						geometries.push(plane);
 					});
 				}
@@ -156,7 +138,7 @@ export class Chunk {
 		}
 
 		if (!this.mesh) {
-			this.mesh = new Mesh(this.GenerateGeometry(), material);
+			this.mesh = new Mesh(this.GenerateGeometry(), this.world.TextureSettings.Material);
 			Workspace.Scene.add(this.mesh);
 		} else {
 			const geometry = this.GenerateGeometry();
@@ -201,7 +183,7 @@ declare global {
 	type ChunkType = InstanceType<typeof Chunk>;
 }
 
-export function setPlaneUv(plane: PlaneGeometry, textureIndex: number): void {
+export function setPlaneUv(plane: PlaneGeometry, textureIndex: number, textureRatio: number): void {
 	const start = textureRatio * (textureIndex - 1);
 	const end = start + textureRatio;
 

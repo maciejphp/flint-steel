@@ -14,8 +14,9 @@ export class Value<T = void> {
 	}
 
 	Set(newValue: T): void {
+		const changed = this.Value !== newValue;
 		this.Value = newValue;
-		this.Fire();
+		if (changed) this.Fire();
 	}
 
 	Disconnect(callback: Listener<T>): void {

@@ -1,6 +1,6 @@
 import { Vector3 } from "three";
 import { Settings } from "./Settings";
-import { AxiosResponse } from "axios";
+import api from "./axiosConfig";
 
 const { ChunkBlockHeight, ChunkBlockWidth } = Settings;
 
@@ -57,16 +57,32 @@ export function getChunkPosition(blockPosition: Vector3): Vector3 {
 	return new Vector3(Math.floor(chunkPosition.x), 0, Math.floor(chunkPosition.z));
 }
 
-export const handleResponse = (response: AxiosResponse): boolean => {
-	const success = response.data.error === undefined;
+export const postRequest = async <toReturn, d>(url: string, data?: d): Promise<toReturn> => {
+	let retries = 5;
+	return new Promise(async (resolve, reject) => {
+		const fetch = async () => {
+			try {
+				const response = await api.post(url, data);
+				const success = response.data.error === undefined;
 
-	if (success) {
-		if (response.data.message) alert(response.data.message);
-	} else {
-		console.warn(response.data.error);
-	}
-
-	return success;
+				if (success) {
+					if (response.data.message) alert(response.data.message);
+					resolve(response.data as toReturn);
+				} else {
+					console.warn(response.data.error);
+					reject(response.data.error);
+				}
+			} catch (error) {
+				retries--;
+				if (retries === 0) {
+					reject(error);
+				} else {
+					await fetch();
+				}
+			}
+		};
+		fetch();
+	});
 };
 
 declare global {

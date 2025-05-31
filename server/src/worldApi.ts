@@ -12,7 +12,7 @@ router.post("/getChunks", async (req, res) => {
 
 		console.log(`Chunk fetch time: ${Date.now() - fetchTime}`);
 
-		res.send({ ChunkData: chunkData });
+		res.send(chunkData);
 	} catch (error) {
 		console.error("Error in getChunks:", error);
 		res.status(500).send("Internal Server Error");

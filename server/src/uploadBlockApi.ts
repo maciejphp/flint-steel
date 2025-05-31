@@ -1,6 +1,7 @@
 import express from "express";
 import { TextureAtlasService } from "./Services/TextureAtlasService.js";
 import { query } from "./Functions.js";
+import { ServerService } from "./Services/ServerService.js";
 
 const router = express.Router();
 
@@ -16,7 +17,8 @@ router.post("/getBlocks", async (req, res) => {
 });
 
 router.post("/uploadBlock", async (req, res) => {
-	TextureAtlasService.UploadTexture(req, res);
+	await TextureAtlasService.UploadTexture(req, res);
+	ServerService.Io.emit("newBlock");
 });
 
 export default router;

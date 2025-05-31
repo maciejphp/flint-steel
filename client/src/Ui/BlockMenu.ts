@@ -2,30 +2,39 @@ import { Workspace } from "../Controllers/Workspace";
 import { ControllerService } from "../Modules/ControllerService";
 import { CreateBlockDisplay } from "../Modules/CreateBlockDisplay";
 
-const UiController = ControllerService.GetController("UiController");
-const HotbarController = ControllerService.GetController("HotbarController");
+const UiController = ControllerService.Get("UiController");
+const HotbarController = ControllerService.Get("HotbarController");
+const WorldController = ControllerService.Get("WorldController");
 
-// Wait for the flipbook texture to be loaded
-Workspace.WaitForGameLoaded().then(() => {
-	(document.getElementById("go-to-block-upload-button") as HTMLButtonElement).addEventListener("click", () => {
-		UiController.ToggleBlockMenu.Fire(false);
-		UiController.ToggleBlockUpload.Fire(true);
-	});
+// Wait for the atlasTexture texture to be loaded
 
-	(document.getElementById("go-to-block-menu-button") as HTMLButtonElement).addEventListener("click", () => {
-		UiController.ToggleBlockUpload.Fire(false);
-		UiController.ToggleBlockMenu.Fire(true);
-	});
+// Workspace.WaitForGameLoaded().then(() => {
+(document.getElementById("go-to-block-upload-button") as HTMLButtonElement).addEventListener("click", () => {
+	UiController.ToggleBlockMenu.Fire(false);
+	UiController.ToggleBlockUpload.Fire(true);
+});
 
-	UiController.ToggleBlockMenu.Connect((openIt) => {
-		const blockMenu = document.getElementById("block-menu") as HTMLDivElement;
-		UiController.ShowInstructions = !openIt;
-		blockMenu.style.display = openIt ? "block" : "none";
-	});
+(document.getElementById("go-to-block-menu-button") as HTMLButtonElement).addEventListener("click", () => {
+	UiController.ToggleBlockUpload.Fire(false);
+	UiController.ToggleBlockMenu.Fire(true);
+});
 
-	const blockMenuContainer = document.getElementById("block-menu-container") as HTMLDivElement;
+UiController.ToggleBlockMenu.Connect((openIt) => {
+	const blockMenu = document.getElementById("block-menu") as HTMLDivElement;
+	UiController.ShowInstructions = !openIt;
+	blockMenu.style.display = openIt ? "block" : "none";
+});
 
-	Workspace.Blocks.forEach((block) => {
+const blockMenuContainer = document.getElementById("block-menu-container") as HTMLDivElement;
+
+const refreshBlockMenu = () => {
+	console.log("Refreshing block menu");
+	blockMenuContainer.innerHTML = ""; // Clear previous content
+
+	const deepcopyBlocks = [...Workspace.Blocks];
+	deepcopyBlocks.sort((a, b) => (a.Uses > b.Uses ? -1 : 1));
+
+	deepcopyBlocks.forEach((block) => {
 		const div = document.createElement("div");
 		div.textContent = `${block.Name}`;
 		div.style.cursor = "pointer";
@@ -40,4 +49,11 @@ Workspace.WaitForGameLoaded().then(() => {
 
 		blockMenuContainer.appendChild(div);
 	});
-});
+};
+
+WorldController.UpdateBlockData.Connect(refreshBlockMenu);
+Workspace.WaitForGameLoaded().then(refreshBlockMenu);
+
+// setInterval(() => {
+// 	refreshBlockMenu();
+// }, 1000);

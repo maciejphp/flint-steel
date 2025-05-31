@@ -3,7 +3,7 @@ import { TextureAtlasService } from "./Services/TextureAtlasService.js";
 
 const router = express.Router();
 
-router.get("/flipbook", (req, res) => {
+router.get("/atlasTexture", (req, res) => {
 	// Send as PNG buffer
 	res.type("png");
 	res.send(TextureAtlasService.Canvas.toBuffer("image/png"));

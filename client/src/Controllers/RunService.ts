@@ -1,13 +1,13 @@
-import { Workspace } from "./Workspace";
+import { ControllerService } from "../Modules/ControllerService";
 import { Signal } from "../Utils/Signal";
+import { Workspace } from "./Workspace";
 
-class Class {
-	private static instance: Class;
+class RunService {
 	private PrevTime = Date.now();
 
 	Heartbeat = new Signal<number>();
 
-	private constructor() {
+	async Init() {
 		Workspace.Renderer.setAnimationLoop(() => {
 			const time = Date.now();
 			this.Heartbeat.Fire((time - this.PrevTime) / 1000);
@@ -16,13 +16,12 @@ class Class {
 			Workspace.Renderer.render(Workspace.Scene, Workspace.Camera);
 		});
 	}
-
-	public static get(): Class {
-		if (!Class.instance) {
-			Class.instance = new Class();
-		}
-		return Class.instance;
-	}
 }
 
-export const RunService = Class.get();
+ControllerService.Register("RunService", RunService);
+
+declare global {
+	interface ControllerConstructors {
+		RunService: typeof RunService;
+	}
+}
