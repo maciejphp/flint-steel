@@ -172,12 +172,9 @@ class WorldController {
 	}
 
 	Start() {
-		const RunService = ControllerService.Get("RunService");
-
-		// Gather chunks to generate
-		RunService.Heartbeat.Connect(() => {
+		setInterval(() => {
+			// Gather chunks to generate
 			const playerChunkPosition = getChunkPosition(Workspace.Camera.position.clone());
-			// Generate new chunk
 			this.FetchNearestChunks(playerChunkPosition);
 
 			// Unload far away chunk
@@ -187,8 +184,7 @@ class WorldController {
 					this.World.DestroyChunk(chunk);
 				}
 			});
-			// console.log(`chunk count: ${this.World.LoadedChunks.length}`);
-		});
+		}, 200);
 	}
 }
 
