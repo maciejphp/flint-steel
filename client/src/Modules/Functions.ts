@@ -1,4 +1,4 @@
-import { Vector3 } from "three";
+import { Euler, Vector3 } from "three";
 import { Settings } from "./Settings";
 import api from "./axiosConfig";
 
@@ -85,7 +85,21 @@ export const postRequest = async <toReturn, d>(url: string, data?: d): Promise<t
 	});
 };
 
+// Converts a PositionFrame object to a PositionFrame with Vector3 types
+export const CreatePositionFrame = (PositionFrame: PositionFrame): PositionFrame => {
+	const { Position: position, Euler: rotation } = PositionFrame;
+	return {
+		Position: position ? new Vector3(position.x, position.y, position.z) : new Vector3(),
+		Euler: rotation ? new Euler(rotation.x, rotation.y, rotation.z) : new Euler(),
+	};
+};
+
 declare global {
 	// eslint-disable-next-line @typescript-eslint/ban-types
 	type Simplify<T> = { [K in keyof T]: T[K] } & {};
+
+	interface PositionFrame {
+		Position: Vector3;
+		Euler: Euler;
+	}
 }

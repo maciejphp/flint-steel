@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { io, Socket } from "socket.io-client";
+import { io } from "socket.io-client";
 import { Settings } from "../Modules/Settings";
 import { Vector3 } from "three";
 import { getChunkBlockPosition, getChunkPosition, positionToId, postRequest } from "../Modules/Functions";
@@ -8,17 +8,24 @@ import { ControllerService } from "../Modules/ControllerService";
 const blockUpdateDelay = 500; // 500ms
 let lastBlockUpdate = 0;
 
+const createSocket = () => {
+	console.log("Creating socket connection to", Settings.server);
+	return io(Settings.server, {
+		withCredentials: true,
+	});
+};
+
 class ServerController {
-	Socket!: Socket;
+	Socket = createSocket();
 	Connected = false;
 	BlockUpdateQueue = new Map<Vector3, number>();
 
 	async Init() {
 		const RunService = ControllerService.Get("RunService");
 
-		this.Socket = io(Settings.server, {
-			withCredentials: true,
-		});
+		// this.Socket = io(Settings.server, {
+		// 	withCredentials: true,
+		// });
 
 		this.Socket.on("connect", () => {
 			console.log("Connected to socket server");

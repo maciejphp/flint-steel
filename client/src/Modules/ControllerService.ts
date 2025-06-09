@@ -32,13 +32,21 @@ class ControllerService {
 
 	static GetAsync<K extends ControllerNames>(name: K): Promise<Controllers[K]> {
 		return new Promise((resolve) => {
-			if (this.Controllers.has(name)) {
-				resolve(this.Controllers.get(name) as Controllers[K]);
-			} else {
-				this.Registration.Connect((registeredName) => {
-					if (registeredName === name) resolve(this.Get(name));
-				});
-			}
+			try {
+				const controller = this.Get(name);
+				if (controller) {
+					resolve(controller);
+					return;
+				}
+			} catch (error) {}
+
+			const event = this.Registration.Connect((registeredName) => {
+				console.log(`Controller '${registeredName}' registered.`, name);
+				if (registeredName === name) {
+					resolve(this.Get(name));
+					this.Registration.Disconnect(event);
+				}
+			});
 		});
 	}
 

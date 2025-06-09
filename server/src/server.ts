@@ -38,12 +38,12 @@ app.get("/backup", async (req, res) => {
 // });
 
 io.on("connection", (socket) => {
+	ServerService.AddPlayer(socket);
+
 	socket.on("updateBlock", async (data: { ChunkPosition: Vector2; PositionId: number; BlockId: number }[]) => {
-		console.log("updateBlock", data.length);
-		data.forEach(async (blockData, index) => {
+		data.forEach(async (blockData) => {
 			const { ChunkPosition, PositionId, BlockId } = blockData;
 			const chunk = await WorldService.GetChunk(ChunkPosition);
-			console.log(PositionId, index);
 
 			if (chunk && chunk[PositionId] !== undefined) {
 				const chunkId = getChunkId(ChunkPosition.x, ChunkPosition.z);
@@ -74,5 +74,6 @@ io.on("connection", (socket) => {
 	console.log("a user connected");
 	socket.on("disconnect", () => {
 		console.log("user disconnected");
+		ServerService.RemovePlayer(socket);
 	});
 });
