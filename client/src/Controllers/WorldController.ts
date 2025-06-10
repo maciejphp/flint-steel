@@ -117,30 +117,10 @@ class WorldController {
 	}
 
 	async Init() {
-		console.log("creating world controller");
 		this.World = new World(this.TextureSettings);
 		InitBlockBreaking();
 
 		this.LoadBlockData();
-
-		// // Update material and texture ratio when new blocks are added
-		// const HotbarController = ControllerService.Get("HotbarController");
-		// const updateTextures = () => {
-		// 	this.TextureSettings.Material.map = Workspace.Texture;
-		// 	this.TextureSettings.Material.needsUpdate = true;
-		// 	this.TextureSettings.TextureRatio = 1 / Workspace.Blocks.length;
-
-		// 	HotbarController.Update();
-
-		// 	// Update all loaded chunks with the new material
-		// 	this.World.LoadedChunks.forEach((chunk) => {
-		// 		if (chunk.mesh) {
-		// 			chunk.mesh.material = this.TextureSettings.Material;
-		// 			chunk.mesh.material.needsUpdate = true;
-		// 		}
-		// 	});
-		// };
-		// this.UpdateBlockData.Connect(updateTextures);
 
 		// Handle new blocks getting added
 		const ServerController = ControllerService.Get("ServerController");

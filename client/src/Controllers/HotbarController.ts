@@ -21,7 +21,7 @@ class HotbarController {
 			} else {
 				slot.Div.style.outline = "#1a1a1a 1px solid";
 			}
-			slot.Div.textContent = `${slot.Block.Name}`;
+			// slot.Div.textContent = `${slot.Block.Name}`;
 
 			slot.Div.style.backgroundImage = `url(${CreateBlockDisplay(slot.Block)})`;
 		});

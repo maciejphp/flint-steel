@@ -27,6 +27,14 @@ class Class {
 
 		const blocks = result[0];
 
+		if (blocks.length === 0) {
+			console.warn("No blocks found in database, creating empty texture atlas");
+			this.Canvas = createCanvas(imageSize, imageSize);
+			this.Ctx = this.Canvas.getContext("2d") as unknown as CanvasRenderingContext2D;
+			this.CanvasLoaded = true;
+			return;
+		}
+
 		this.Canvas = createCanvas(blocks.length * imageSize, imageSize);
 		// this.Canvas = createCanvas(imageSize, imageSize);
 		// console.log("Total images in atlasTexture:", this.Canvas.width / imageSize);

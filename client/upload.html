@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin menu</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        #block-upload {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Flint Steel -- Admin Panel </h1>
+    <input type="password" placeholder="Password" id="passwordInput"><br>
+    <h3>sad cunts not allowed</h3>
+
+    <div id="block-upload">
+      <div class="header">
+        <h2>Upload block texture</h2>
+      </div>
+      <label>
+        block name
+          <input id="block-upload-name-input">
+
+      </label>
+      <div id="block-upload-dropzone-container">
+        <div id="block-upload-dropzone">
+            Drag and drop an image here or click to upload
+        </div>
+        <canvas id="block-upload-canvas" width="64" height="64"></canvas>
+      </div>
+      <input type="file" id="block-upload-upload" accept="image/*"  style="display: none;">
+      <p style="color: white; margin-bottom: 15px;">The image will be resized to a 64px by 64px format.</p>
+      <button id="block-upload-button">Upload</button>
+    </div>
+
+    <script type="module">
+        import api from "/src/Modules/axiosConfig";
+        const dropzone = document.getElementById('block-upload-dropzone');
+        const fileInput = document.getElementById('block-upload-upload');
+        const canvas = document.getElementById('block-upload-canvas');
+        const ctx = canvas.getContext('2d');
+
+        dropzone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.style.backgroundColor = '#444';
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.style.backgroundColor = '';
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.style.backgroundColor = '';
+            handleFile(e.dataTransfer.files[0]);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) return;
+
+            const img = new Image();
+            img.onload = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, 64, 64);
+            };
+            img.src = URL.createObjectURL(file);
+        }
+
+
+        document.getElementById('block-upload-button').addEventListener('click', async () => {
+            const password = passwordInput.value;
+            if (!password) {
+                alert("Please enter a password");
+                return;
+            }
+
+            const blockId = document.getElementById('block-upload-name-input').value;
+            const dataURL = canvas.toDataURL('image/png');
+
+            const response = await api.post("/uploadBlock", { Name: blockId, Image: dataURL });
+            console.log(response.data);
+        });
+
+
+
+
+    </script>
+</body>
+</html>
